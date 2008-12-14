@@ -10,6 +10,10 @@ Stable tag: 1.0
 
 Adds an input to the media upload and management screens. This input field can be used to "tag" a media file. Works with images, documents anything.
 
+[Plugin Homepage](http://www.codehooligans.com/2008/12/14/media-tags-plugin/ "Media-Tags Plugin")
+
+
+
 == Installation ==
 
 1. Upload the extracted plugin folder and contained files to your `/wp-content/plugins/` directory
