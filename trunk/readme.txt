@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com
 Tags: images, tags, media
 Requires at least: 2.6.5
 Tested up to: 2.7
-Stable tag: 1.0
+Stable tag: 1.0.1
 
 == Description ==
 
@@ -54,4 +54,5 @@ Actual examples of the function call are
 == Version Histroy == 
 <p>
 1.0 - 2008-12-13: Initial release<br />
+1.0.1 - 2009-02-04: Found an issue with the returned attachment when calling get_posts. Changed this to get_children.<br />
 </p>

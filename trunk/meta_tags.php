@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Media Tags
-Plugin URI: http://www.codehooligans.com
+Plugin URI: http://www.codehooligans.com/2008/12/14/media-tags-plugin/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 1.0
+Version: 1.0.1
 Author URI: http://www.codehooligans.com
 */
 class MediaTags {
@@ -263,7 +263,12 @@ class MediaTags {
 
 		$tag_attachents = array();
 
-		$post_attachments = get_posts('post_parent='. $r['post_parent'] .'&post_type=attachment&orderby=title&order=ASC');
+		//$post_attachments = get_posts('post_parent='. $r['post_parent'] .'&post_type=attachment&orderby=title&order=ASC');
+		$post_attachments = get_children( array(	'post_parent' => $r['post_parent'], 
+											'post_status' => 'inherit', 
+											'post_type' => 'attachment', 
+											'order' => 'asc', 
+											'orderby' => 'title') );
 		if ($post_attachments)
 		{
 			foreach ( $post_attachments as $attachment_item ) 
