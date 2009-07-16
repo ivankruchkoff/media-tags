@@ -78,7 +78,7 @@ class MediaTags {
 		if (!$media_tags_version)
 		{
 			// Here we need to convert the existing legacy media tags into the terms table. 
-			include_once ( dirname (__FILE__) . '/mediataga_legacy_convert.php' );
+			include_once ( dirname (__FILE__) . '/mediatags_legacy_convert.php' );
 			$legacy_master_media_tags = legacy_load_master_media_tags();
 			if ($legacy_master_media_tags)
 			{
