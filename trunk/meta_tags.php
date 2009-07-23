@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Media Tags
-Plugin URI: http://www.codehooligans.com/2008/12/14/media-tags-plugin/
+Plugin URI: http://www.codehooligans.com/2009/07/15/media-tags-20-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.0
+Version: 2.1
 Author URI: http://www.codehooligans.com
 */
 
@@ -116,7 +116,6 @@ class MediaTags {
 					$media_tags_tmp 	= (array)wp_get_object_terms($attachment->ID, MEDIA_TAGS_TAXONOMY);
 				}
 			}
-			
 			
 			// Then insert/update the options table with the current plugin version so we don't have to check each time. 
 			update_option('media-tags-version', $this->plugin_version);

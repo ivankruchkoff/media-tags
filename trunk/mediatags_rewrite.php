@@ -132,8 +132,15 @@ function mediatags_postsWhere($where)
 		}
 
 	}
+	else if (isset($_REQUEST['mediatag_id']))
+	{
+		$whichmediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
+		$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = '".$_REQUEST['mediatag_id']."' ";		
+	}
+
 	$where .= $whichmediatags;
-	//echo "where=[".$where."]<br />";
+	//echo "after where=[".$where."]<br />";
+	
 	return $where;
 }
 
@@ -142,10 +149,11 @@ function mediatags_postsJoin($join)
 {
 	global $wpdb;
 
-	$series_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	$cat_var = get_query_var('cat');
 
-	if ( !empty($series_var) && empty( $cat_var ) )  
+	if (( !empty($mediatag_var) && empty( $cat_var )) 
+	 || (isset($_REQUEST['mediatag_id'])))
 	{
 		$join = " INNER JOIN $wpdb->term_relationships 
 					ON ($wpdb->posts.ID = $wpdb->term_relationships.object_id) 

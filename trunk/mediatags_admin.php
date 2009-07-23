@@ -36,8 +36,8 @@ function mediatags_admin_panel() {
 		<?php
 			if ((isset($_GET['action'])) && ($_GET['action'] == 'editmediatag'))
 			{
-				$tag_ID = (int) $_GET['tag_ID'];
-				mediatags_process_edit($tag_ID);
+				$mediatag_ID = (int) $_GET['mediatag_ID'];
+				mediatags_process_edit($mediatag_ID);
 			}
 			else
 			{
@@ -187,7 +187,7 @@ function media_tags_register_columns() {
 	$media_tags_edit_columns = array('cb' => '<input type="checkbox" />',
 														'name' => __('Name'),
 														'slug' => __('Slug'),
-														'posts' => __('Posts'));
+														'posts' => __('Used'));
 
 	// Register columns for Edit Media Tags listing
 	register_column_headers('edit-media-tags', $media_tags_edit_columns );
@@ -220,12 +220,15 @@ function media_tags_display_rows( $taxonomy = '', $page = 1, $pagesize = 20, $se
 }
 
 function _media_tag_row( $tag, $class = '' ) {
-		$count = number_format_i18n( $tag->count );
-		$count = ( $count > 0 ) ? "<a href='edit.php?tag=$tag->slug'>$count</a>" : $count;
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=media-tags/meta_tags.php";
+	
+	$count = number_format_i18n( $tag->count );
+	$count = ( $count > 0 ) ? "<a href='".
+		get_option('siteurl')."/wp-admin/upload.php?mediatag_id=$tag->term_id'>$count</a>" : $count;
 
-		$name = apply_filters( 'term_name', $tag->name );
-		$qe_data = get_term($tag->term_id, MEDIA_TAGS_TAXONOMY, object, 'edit');
-		$edit_link = get_option('siteurl')."/wp-admin/upload.php?page=media-tags/meta_tags.php&action=editmediatag&amp;tag_ID=$tag->term_id";
+	$name = apply_filters( 'term_name', $tag->name );
+	$qe_data = get_term($tag->term_id, MEDIA_TAGS_TAXONOMY, object, 'edit');
+	$edit_link = $base_url ."&action=editmediatag&amp;mediatag_ID=$tag->term_id";
 		
 		$out = '';
 		$out .= '<tr id="tag-' . $tag->term_id . '"' . $class . '>';
@@ -251,7 +254,7 @@ function _media_tag_row( $tag, $class = '' ) {
 					$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
 					$actions['delete'] = "<a class='submitdelete' href='" .
 					 wp_nonce_url(get_option('siteurl')
-					 ."/wp-admin/upload.php?page=media-tags/meta_tags.php&amp;action=deletemediatag&amp;tag_ID=$tag->term_id", 
+					 ."/wp-admin/upload.php?page=media-tags/meta_tags.php&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
 					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . js_escape(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) { return true;}return false;\">" . __('Delete') . "</a>";
 					$action_count = count($actions);
 					$i = 0;
@@ -383,7 +386,7 @@ function mediatags_process_actions()
 		case 'addmediatag':
 			mediatags_process_add();
 			break;
-			
+
 		default:
 			break;
 	}
@@ -421,11 +424,11 @@ function mediatags_process_add()
 
 function mediatags_process_delete()
 {
-	if (!isset($_REQUEST['tag_ID']))
+	if (!isset($_REQUEST['mediatag_ID']))
 		return;
 		
-	$tag_ID = intval($_REQUEST['tag_ID']);
-	wp_delete_term( $tag_ID, MEDIA_TAGS_TAXONOMY);
+	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
+	wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
 	
 	wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=2");
 	exit;	
@@ -437,8 +440,8 @@ function mediatags_process_delete_bulk()
 	{
 		foreach($_REQUEST['delete_media_tags'] as $delete_media_tag)
 		{
-			$tag_ID = intval($delete_media_tag);
-			wp_delete_term( $tag_ID, MEDIA_TAGS_TAXONOMY);
+			$mediatag_ID = intval($delete_media_tag);
+			wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
 		}
 		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=6");
 	}	
@@ -449,13 +452,13 @@ function mediatags_process_delete_bulk()
 
 function mediatags_process_update()
 {
-	if (!isset($_REQUEST['tag_ID']))
+	if (!isset($_REQUEST['mediatag_ID']))
 		return;
 
 
 	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
 
-	$tag_ID = intval($_REQUEST['tag_ID']);
+	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
 
 	$media_tag_name = trim($_REQUEST['name']);
 
@@ -473,7 +476,7 @@ function mediatags_process_update()
 	if ( '' === $media_tag_slug )
 		return;
 
-	$ret = wp_update_term($tag_ID, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug, 'name' => $media_tag_name));
+	$ret = wp_update_term($mediatag_ID, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug, 'name' => $media_tag_name));
 	if ( $ret && !is_wp_error( $ret ) ) {
 		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=3");
 	} else {
@@ -482,14 +485,14 @@ function mediatags_process_update()
 	exit;
 }
 
-function mediatags_process_edit($tag_ID)
+function mediatags_process_edit($mediatag_ID)
 {
-	if ( empty($tag_ID) ) { ?>
+	if ( empty($mediatag_ID) ) { ?>
 		<div id="message" class="updated fade"><p><strong><?php _e('A tag was not selected for editing.'); ?></strong></p></div>
 	<?php
 		return;
 	}
-	$tag = get_term($tag_ID, MEDIA_TAGS_TAXONOMY, OBJECT, 'edit');			
+	$tag = get_term($mediatag_ID, MEDIA_TAGS_TAXONOMY, OBJECT, 'edit');			
 
 	do_action('edit_tag_form_pre', $tag); ?>
 
@@ -500,8 +503,8 @@ function mediatags_process_edit($tag_ID)
 	<form name="edittag" id="edittag" method="post" class="validate"
 			action="<?php get_option('siteurl') ?>/wp-admin/upload.php?page=media-tags/meta_tags.php">
 		<input type="hidden" name="action" value="updatemediatag" />
-		<input type="hidden" name="tag_ID" value="<?php echo $tag->term_id ?>" />
-	<?php wp_original_referer_field(true, 'previous'); wp_nonce_field('update-tag_' . $tag_ID); ?>
+		<input type="hidden" name="mediatag_ID" value="<?php echo $tag->term_id ?>" />
+	<?php wp_original_referer_field(true, 'previous'); wp_nonce_field('update-tag_' . $mediatag_ID); ?>
 		<table class="form-table">
 			<tr class="form-field form-required">
 				<th scope="row" valign="top"><label for="name"><?php _e('Tag name') ?></label></th>

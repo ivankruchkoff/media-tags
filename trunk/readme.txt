@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com
 Tags: images, tags, media
 Requires at least: 2.7.1
 Tested up to: 2.8
-Stable tag: 2.0
+Stable tag: 2.1
 
 == Description ==
 
@@ -110,7 +110,6 @@ The new version (2.x) now support the use of a new permalink structure for displ
 By default the plugin will use the default WordPress templates in your theme directory. This means is you have a template file 'archive.php' it will be used to display the archive. If not then the 'index.php' template file will be used. Optionally, you can also use the new mediatags.php template file in your theme. This will let you control the display of media tags archives from other post archives. Also, you can create media tag specific template files like 'mediatag-xx.php' where 'xx' is the media tag ID. This follows similar convention for the built-in WordPress category template hierarchy. http://codex.wordpress.org/Category_Templates	
 
 
-
 == Screenshots ==
 
 1. The Media Tags example via the Media popup from the Post editor screen. 
@@ -122,4 +121,6 @@ By default the plugin will use the default WordPress templates in your theme dir
 1.0 - 2008-12-13: Initial release<br />
 1.0.1 - 2009-02-04: Found an issue with the returned attachment when calling get_posts. Changed this to get_children.<br />
 2.0 - 2009-07-15: Major update to the plugin. New Permalink, shortcodes, Media Tags management interface.<br />
+2.1 - 2009-07-23: Changes include code cleanup and correcting link under new Media-Tags Management screen.<br />
+
 </p>
