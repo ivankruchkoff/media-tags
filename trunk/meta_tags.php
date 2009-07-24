@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/2009/07/15/media-tags-20-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.1.1
+Version: 2.1.2
 Author URI: http://www.codehooligans.com
 */
 
