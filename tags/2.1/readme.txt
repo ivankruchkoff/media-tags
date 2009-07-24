@@ -1,10 +1,10 @@
 === Media Tags ===
 Contributors: Paul Menard
-Donate link: http://www.codehooligans.com/donations/
+Donate link: http://www.codehooligans.com
 Tags: images, tags, media
 Requires at least: 2.7.1
-Tested up to: 2.8.2
-Stable tag: 2.1.1
+Tested up to: 2.8
+Stable tag: 2.1
 
 == Description ==
 
@@ -116,23 +116,11 @@ By default the plugin will use the default WordPress templates in your theme dir
 2. The Media Tags displayed via the Media Management screen. 
 3. The Media Tags Management screen (new!)
 
-== Changelog == 
-
+== Version Histroy == 
 <p>
-=2.1.1=
-* 2009-07-23: Changes to fix relative paths when WordPress is not installed into the root. Thanks to Ilan Y. Cohen for the tip on this bug. 
-
-=2.1=
-* 2009-07-23: Changes include code cleanup and correcting link under new Media-Tags Management screen.
-
-=2.0=
-* 2009-07-15: Major update to the plugin. New Permalink, shortcodes, Media Tags management interface.
-
-=1.0.1=
-* 2009-02-04: Found an issue with the returned attachment when calling get_posts. Changed this to get_children.
-
-=1.0=
-* 2008-12-13: Initial release
-
+1.0 - 2008-12-13: Initial release<br />
+1.0.1 - 2009-02-04: Found an issue with the returned attachment when calling get_posts. Changed this to get_children.<br />
+2.0 - 2009-07-15: Major update to the plugin. New Permalink, shortcodes, Media Tags management interface.<br />
+2.1 - 2009-07-23: Changes include code cleanup and correcting link under new Media-Tags Management screen.<br />
 
 </p>

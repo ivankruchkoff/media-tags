@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/2009/07/15/media-tags-20-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.1.1
+Version: 2.1
 Author URI: http://www.codehooligans.com
 */
 
@@ -139,9 +139,7 @@ class MediaTags {
 	function admin_head_proc()
 	{
 		?>
-		<link rel="stylesheet" href="<?php echo $this->plugindir_url ?>/mediatags_style_admin.css" 
-			type="text/css" media="screen" />
-			
+		<link rel="stylesheet" href="<?php echo $this->plugindir_url ?>/mediatags_style_admin.css" type="text/css" media="screen" />
 		<?php if ((isset($_REQUEST['page']))
 		 	&& ($_REQUEST['page'] == "media-tags/meta_tags.php"))
 		{	?><script type="text/javascript" src="<?php echo $this->plugindir_url ?>/mediatags_inline_edit.js"></script><?php }

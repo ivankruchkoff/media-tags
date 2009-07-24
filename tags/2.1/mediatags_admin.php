@@ -501,7 +501,7 @@ function mediatags_process_edit($mediatag_ID)
 	<h2><?php _e('Edit Media Tag'); ?></h2>
 	<div id="ajax-response"></div>
 	<form name="edittag" id="edittag" method="post" class="validate"
-			action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=media-tags/meta_tags.php">
+			action="<?php get_option('siteurl') ?>/wp-admin/upload.php?page=media-tags/meta_tags.php">
 		<input type="hidden" name="action" value="updatemediatag" />
 		<input type="hidden" name="mediatag_ID" value="<?php echo $tag->term_id ?>" />
 	<?php wp_original_referer_field(true, 'previous'); wp_nonce_field('update-tag_' . $mediatag_ID); ?>
