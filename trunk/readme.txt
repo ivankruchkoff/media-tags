@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
 Tested up to: 2.8.2
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 
 == Description ==
 
@@ -117,6 +117,9 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+
+= 2.1.2 =
+* 2009-07-24: Changes include a bug in the SQL Where parsing to display media tags via the site. The bug prevented non-authenticated users from seeing the items. Correct SQL Where parsing. Thanks for Francisco Ernesto Teixeira for find this issue and reporting it http://www.codehooligans.com/2009/07/15/media-tags-20-released/#comment-42663
 
 = 2.1.1 =
 * 2009-07-23: Changes to fix relative paths when WordPress is not installed into the root. Thanks to Ilan Y. Cohen for the tip on this bug. 

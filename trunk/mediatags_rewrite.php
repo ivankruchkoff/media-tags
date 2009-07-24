@@ -114,8 +114,11 @@ function mediatags_postsWhere($where)
 		$sermedia_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
 		//echo "sermedia_tags_chk<pre>"; print_r($sermedia_tags_chk); echo "</pre>";
 
+		// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
 		$where = str_replace("AND wp_posts.post_type = 'post'", "AND wp_posts.post_type = 'attachment'", $where);
 		$where = str_replace("(wp_posts.post_status = 'publish' OR wp_posts.post_status = 'private')", 
+								"(wp_posts.post_status = 'inherit')", $where);
+		$where = str_replace("(wp_posts.post_status = 'publish')", 
 								"(wp_posts.post_status = 'inherit')", $where);
 
 		//$token = "'" . MEDIA_TAGS_QUERYVAR . "'";
