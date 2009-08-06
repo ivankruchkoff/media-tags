@@ -111,4 +111,16 @@ function get_attachments_by_media_tags($args='')
 	
 	return $mediatags->get_attachments_by_media_tags($args);
 }
+
+function single_mediatag_title()
+{
+	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	if ($mediatag_var) {	
+		$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		if (isset($mediatag_term['term_id'])) {
+			$media_tag = &get_term( $mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY );
+			echo $media_tag->name;
+		}
+	}	
+}
 ?>

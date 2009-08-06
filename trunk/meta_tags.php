@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/2009/07/15/media-tags-20-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.1.2
+Version: 2.1.3
 Author URI: http://www.codehooligans.com
 */
 
@@ -291,6 +291,7 @@ class MediaTags {
 			'display_item_callback' => 'default_item_callback',
 			'media_tags' => '', 
 			'media_types' => null,
+			'search_by' => 'slug',
 			'numberposts' => '-1',
 			'orderby' => 'menu_order',
 			'order' => 'DESC',
@@ -320,6 +321,11 @@ class MediaTags {
 //			}			
 //		}
 //		echo "post_parent<pre>"; print_r($r['post_parent']); echo "</pre>";
+
+		// Force 'OR' on compare if searching by name (not slug). This is because the name search will return multiple
+		// values per each 'media_tags' searched item.
+		if ($r['search_by'] != 'slug')
+			$r['tags_compare'] = 'OR';
 
 		// First split the comma-seperated media-tags list into an array
 		$r['media_tags_array'] = split(',', $r['media_tags']);
@@ -352,24 +358,31 @@ class MediaTags {
 			foreach($r['media_tags_array'] as $search_term)
 			{
 				$get_terms_args['hide_empty'] = 0;
-				$get_terms_args['search'] = $search_term;
-				$terms_item = get_terms( MEDIA_TAGS_TAXONOMY, $get_terms_args );
-				//echo "terms_item<pre>"; print_r($terms_item); echo "</pre>";
 
-				if ($terms_item[0])
-					$search_terms_array[$search_term] = $terms_item[0];
+				if ($r['search_by'] != "slug")
+					$get_terms_args['search'] = $search_term;
+				else
+					$get_terms_args['slug'] = $search_term;
+					
+				$terms_item = get_terms( MEDIA_TAGS_TAXONOMY, $get_terms_args );
+				if ($terms_item)
+					$search_terms_array[$search_term] = $terms_item;
 			}
 		}
-
 
 		$objects_ids_array = array();
 		if (count($search_terms_array))
 		{
-			foreach($search_terms_array as $search_term_item)
+			foreach($search_terms_array as $search_term_items)
 			{
-				$objects_ids = get_objects_in_term($search_term_item->term_id, MEDIA_TAGS_TAXONOMY);
-				if ($objects_ids)
-					$objects_ids_array[] = $objects_ids;				
+				if ($search_term_items) {
+					foreach($search_term_items as $search_term_item)
+					{				
+						$objects_ids = get_objects_in_term($search_term_item->term_id, MEDIA_TAGS_TAXONOMY);
+						if ($objects_ids)
+							$objects_ids_array[] = $objects_ids;
+					}
+				}
 			}
 		}
 		

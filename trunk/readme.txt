@@ -3,8 +3,8 @@ Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
-Tested up to: 2.8.2
-Stable tag: 2.1.2
+Tested up to: 2.8.3
+Stable tag: 2.1.3
 
 == Description ==
 
@@ -22,6 +22,7 @@ Also included as part of the plugin rewrite are some handy template tags to use 
 * list_mediatags() - Very handy for listing your media tags like list_tags() in the sidebar.php
 * get_mediatag_link() - Given a mediatag_id this functon will return a link href value. 
 * the_mediatags() - Very much like the post-level the_tags() to display a comma separated list of tags for a given post item. Used then displaying media tags archives. 
+* single_mediatag_title() - Get the Title of the Archive.
 
 Speaking of template tags you can now have even more control over the display of media tags archives. Much like the WordPress category template hierarchy you can now define a template file as part of your theme names 'mediatag.php' This is a special archive file tha can be used to display your loop of items. Alternately, you can also used ID specific template files like 'mediatag-25.php'. This is the same basic logic for category specific template file. It lets you use a special template file to display that specific media tag ID group. If the 'mediatag.php' template file is not provided then the default hierarchy or template files will be used starting with archive.php. Please not the template file when used will display attachments not the parent post. In WordPress all uploaded media is part of a parent/child association. Unlike the normal post related template the media tag template display the actual media files. 
 
@@ -52,14 +53,24 @@ To actually get to the images for display in the sidebar you will need to have a
 
 There are a number of arguments that can be passed into the function to filter the media:
 
-media_tags: (Required) This is a comma separated list of tags you want to filter on. 
+media_tags: (Required) This is a comma separated list of tags (slug) you want to filter on. 
+
 media_types: (Optional) This is a comma separated list of media types - gif, pdf, png to return
+
+search_by: (Optional) Default is 'slug'. Denotes what is passed in the 'media_tags' parameter. To search by media tag name pass the name into the 'media_tags' parameter and 'name' into the 'search_by' parameter. 
+
 post_parent: (Optional) This is the post ID of the related media items. This item is no longer required. This allows you to query media_tag items across all posts
+
 numberposts: (Optional) Default is all. Allows control over the number of items returned.
+
 orderby: (Optional) Default menu_order. See get_posts() for full list of options
+
 order: (Optional) Default 'DESC'. Controls the order of items. Other option is 'ASC'.
+
 offset: (Offset) Default is 0. Allows control over the subset of items returned.
+
 return_type: (Optional) Defaults to Array. Other option is 'li'. In the case of shortcodes the return type is 'li' by default. When using the 'li' return type each element is given a class of 'media_tag_list' and an id of 'media-tag-item-xxxx' where 'xxx' is the attachment id.
+
 tags_compare: (Optional) Defaults to 'OR'. When requesting multiple media_tags elements allow a compare between the lists of items returned. When using the 'OR' option returned item will be in one or more of the requested media_tags values. Other value is 'AND'. When using 'AND' you are requesting only attachments which are in all requested media_tags. 
 
 Actual examples of the function call are:
@@ -83,7 +94,7 @@ Great. The media tags plugin now support the use of shortcodes. In its simplest 
 
 	[media-tags media_tags="alt-views,page-full,thumb"]
 	
-Note you need to include quotes around the element value to ensure proper handling. The shortcode parameters available are pretty close to the direct function call. The exception is you need to specify the parameter name and value pairs. 
+Note you need to include quotes around the element value to ensure proper handling. The shortcode parameters available are pretty close to the direct function call. The media_tags parameter is the mediatag slug. The exception is you need to specify the parameter name and value pairs. 
 
 	[media-tags media_tags="alt-views,page-full,thumb" tags_compare="AND" orderby="menu_order"]
 
@@ -93,6 +104,9 @@ Lastly, when using the shortcode feature you may have a time when you need to sp
 
 	[media-tags media_tags="alt-views,page-full,thumb" post_parent="this" before_list="<ul class='frank'>" after_list="</ul>"]
 
+Note as of version 2.1.3 of the plugin the 'media_tags' parameter must be the slug. To search by name use the new 'search_by=' parameter. As follows:
+
+	[media-tags media_tags="Italy" search_by="name" post_parent="this" before_list="<ul class='frank'>" after_list="</ul>"]
 
 = I want to display the media tags in my sidebar =
 
@@ -105,7 +119,7 @@ There are many more template functions available. Check out the functions listed
 
 The new version (2.x) now support the use of a new permalink structure for displaying media tags archives. This is automatic when you activate the plugin. A simple way to see this in actual is to add the template function 'list_mediatags()' to your sidebar. This will list all media tags in your system complete with clickable links. When you click on one of the links you will see the URL is something like:
 
-	http://www.yoursite.com/media-tags/<media tag name>
+	http://www.yoursite.com/media-tags/<media tag slug>
 	
 By default the plugin will use the default WordPress templates in your theme directory. This means is you have a template file 'archive.php' it will be used to display the archive. If not then the 'index.php' template file will be used. Optionally, you can also use the new mediatags.php template file in your theme. This will let you control the display of media tags archives from other post archives. Also, you can create media tag specific template files like 'mediatag-xx.php' where 'xx' is the media tag ID. This follows similar convention for the built-in WordPress category template hierarchy. http://codex.wordpress.org/Category_Templates	
 
@@ -118,8 +132,13 @@ By default the plugin will use the default WordPress templates in your theme dir
 
 == Changelog == 
 
+= 2.1.3 =
+* 2009-08-06: Changes include a addition of new template function 'single_mediatag_title()' for use on the archive.php template or the new mediatag.php template file. Thanks to Carlos for the comment regarding this. http://www.codehooligans.com/2009/07/15/media-tags-20-released/comment-page-1/#comment-42956
+
+Also included are some small changes to cleanup the core media tag search code. One change as suggested by Jozik http://www.codehooligans.com/2009/07/15/media-tags-20-released/comment-page-1/#comment-42927 to correct the get_terms argument to search by slug as default. To search by name you may use the 'search_by=name' function argument. This new 'search_by' parameter is also supported via the shortcodes. 
+
 = 2.1.2 =
-* 2009-07-24: Changes include a bug in the SQL Where parsing to display media tags via the site. The bug prevented non-authenticated users from seeing the items. Correct SQL Where parsing. Thanks for Francisco Ernesto Teixeira for find this issue and reporting it http://www.codehooligans.com/2009/07/15/media-tags-20-released/#comment-42663
+* 2009-07-24: Changes include a bug in the SQL 'Where' parsing to display media tags via the site. The bug prevented non-authenticated users from seeing the items. Correct SQL Where parsing. Thanks for Francisco Ernesto Teixeira for find this issue and reporting it http://www.codehooligans.com/2009/07/15/media-tags-20-released/#comment-42663
 
 = 2.1.1 =
 * 2009-07-23: Changes to fix relative paths when WordPress is not installed into the root. Thanks to Ilan Y. Cohen for the tip on this bug. 
