@@ -1,0 +1,36 @@
+body#media-upload tr.media-meta ul#media-tags-list {
+	list-style:none;	
+	margin: 10px 0 20px 0;
+	padding: 0 0 0 0;
+}
+
+body#media-upload tr.media-meta ul#media-tags-list li {
+	float: left;
+	margin: 0 10px 0 0;
+	padding: 0;
+	width: 30%;
+}
+
+body.wp-admin div.media-single tr.media-meta ul#media-tags-list {
+	list-style:none;	
+	margin: 10px 0 20px 0;
+	padding: 0 0 0 0;
+}
+
+body.wp-admin tr.media-meta ul#media-tags-list li {
+	float: left;
+	margin: 0 10px 0 0;
+	padding: 0;
+}
+
+body.wp-admin tr.media-meta ul#media-tags-list li label {
+	display: inline;
+}
+
+body.wp-admin div#media-items tr.media-meta ul#media-tags-list li {
+	width: 30%;
+}
+
+body.wp-admin div.media-single tr.media-meta ul#media-tags-list li {
+	width: 20%;
+}
