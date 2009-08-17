@@ -105,6 +105,7 @@ function mediatags_postsWhere($where)
 { 
 	global $wpdb;
 	
+	//echo "_REQUEST[mediatag_id]=[".$_REQUEST['mediatag_id']."]<br />";
 	//echo "where - initial =[".$where."]<br />";
 	
 	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);

@@ -96,7 +96,7 @@ inlineEditMediaTags= {
 		$('table.widefat .inline-edit-save .waiting').show();
 
 		var params = {
-			page: 'media-tags/meta_tags.php',
+			page: 'media-tags',
 			action: 'inline-save-mediatag',
 			tax_type: this.type,
 			tax_ID: id

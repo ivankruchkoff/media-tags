@@ -1,13 +1,13 @@
 <?php
-require_once(ABSPATH . 'wp-includes/pluggable.php');
 
 function mediatags_admin_panel() {
+	require_once(ABSPATH . 'wp-includes/pluggable.php');
+
 	media_tags_register_columns();
 
 	//$can_manage = current_user_can('manage_media_tags');	
 	if ( ! current_user_can( 'manage_categories' ) )
 		return;
-	
 	
 	$messages[1] = __('Media Tag added.');
 	$messages[2] = __('Media Tag deleted.');
@@ -17,10 +17,6 @@ function mediatags_admin_panel() {
 	$messages[6] = __('Media Tags deleted.');
 	
 	$title = __('Media Tags');
-	
-	
-	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
-	
 	?>
 	<div class="wrap nosubsub">
 		<?php screen_icon(); ?>
@@ -45,7 +41,7 @@ function mediatags_admin_panel() {
 				<form class="search-form" method="get"
 					action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php">
 				<p class="search-box">
-					<input type="hidden" name="page" value="media-tags/meta_tags.php" />
+					<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY; ?>" />
 					<input type="hidden" name="action" value="searchmediatag" />
 					<label class="hidden" for="media-tags-search-input"><?php _e( 'Search Media Tags' ); ?>:</label>
 					<input type="text" class="search-input" id="media-tags-search-input" name="s" value="<?php _admin_search_query(); ?>" />
@@ -84,7 +80,7 @@ function mediatags_admin_panel() {
 											<option value="" selected="selected"><?php _e('Bulk Actions'); ?></option>
 											<option value="deletemediatagsbulk"><?php _e('Delete'); ?></option>
 										</select>
-										<input type="hidden" name="page" value="media-tags/meta_tags.php" />
+										<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY ?>" />
 										<input type="submit" value="<?php _e('Apply'); ?>" name="doaction" 
 											id="doaction" class="button-secondary action" />
 										<?php wp_nonce_field('media-tags-bulk'); ?>
@@ -146,7 +142,7 @@ function mediatags_admin_panel() {
 								<div id="ajax-response"></div>
 
 								<form name="addmediatag" id="addmediatag" method="post" class="add:the-list: validate"
-									action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=media-tags/meta_tags.php">
+									action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=<?php echo ADMIN_MENU_KEY; ?>">
 									<input type="hidden" name="action" value="addmediatag" />
 
 									<div class="form-field form-required">
@@ -220,7 +216,7 @@ function media_tags_display_rows( $taxonomy = '', $page = 1, $pagesize = 20, $se
 }
 
 function _media_tag_row( $tag, $class = '' ) {
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=media-tags/meta_tags.php";
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
 	
 	$count = number_format_i18n( $tag->count );
 	$count = ( $count > 0 ) ? "<a href='".
@@ -254,7 +250,7 @@ function _media_tag_row( $tag, $class = '' ) {
 					$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
 					$actions['delete'] = "<a class='submitdelete' href='" .
 					 wp_nonce_url(get_option('siteurl')
-					 ."/wp-admin/upload.php?page=media-tags/meta_tags.php&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
+					 ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
 					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . js_escape(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) { return true;}return false;\">" . __('Delete') . "</a>";
 					$action_count = count($actions);
 					$i = 0;
@@ -287,8 +283,8 @@ function _media_tag_row( $tag, $class = '' ) {
 
 function inline_edit_mediatags_row($type) {
 
-//	if ( ! current_user_can( 'manage_categories' ) )
-//		return;
+	if ( ! current_user_can( 'manage_categories' ) )
+		return;
 
 	$is_tag = $type == 'edit-media-tags';
 	$columns = get_column_headers($type);
@@ -311,15 +307,6 @@ function inline_edit_mediatags_row($type) {
 				<span class="title"><?php _e( 'Slug' ); ?></span>
 				<span class="input-text-wrap"><input type="text" name="slug" class="ptitle" value="" /></span>
 			</label>
-
-<?php if ( 'category' == $type ) : ?>
-
-			<label>
-				<span class="title"><?php _e( 'Parent' ); ?></span>
-				<?php wp_dropdown_categories(array('hide_empty' => 0, 'name' => 'parent', 'orderby' => 'name', 'hierarchical' => 1, 'show_option_none' => __('None'))); ?>
-			</label>
-
-<?php endif; // $type ?>
 
 		</div></fieldset>
 
@@ -410,13 +397,16 @@ function mediatags_process_add()
 	if ( '' === $media_tag_slug )
 		return;
 
+	if (!function_exists('wp_redirect'))
+		require_once(ABSPATH . 'wp-includes/pluggable.php');
+
 	if ( !is_term( $media_tag_name, MEDIA_TAGS_TAXONOMY ) ) 
 	{
 		$ret = wp_insert_term( $media_tag_name, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug));
 		if ( $ret && !is_wp_error( $ret ) ) {
-			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=1");
+			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=1");
 		} else {
-			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=4");
+			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=4");
 		}
 		exit;
 	}
@@ -430,7 +420,14 @@ function mediatags_process_delete()
 	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
 	wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
 	
-	wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=2");
+	$redirect_url = get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=2";
+	if (isset($_REQUEST['pagenum']))
+		$redirect_url .= "pagenum=".$_REQUEST['pagenum'];
+
+	if (!function_exists('wp_redirect'))
+		require_once(ABSPATH . 'wp-includes/pluggable.php');
+	
+	wp_redirect($redirect_url);
 	exit;	
 }
 
@@ -443,10 +440,13 @@ function mediatags_process_delete_bulk()
 			$mediatag_ID = intval($delete_media_tag);
 			wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
 		}
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=6");
+		if (!function_exists('wp_redirect'))
+			require_once(ABSPATH . 'wp-includes/pluggable.php');
+		
+		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=6");
 	}	
 	else
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php");
+		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY);
 	exit;	
 }
 
@@ -454,9 +454,6 @@ function mediatags_process_update()
 {
 	if (!isset($_REQUEST['mediatag_ID']))
 		return;
-
-
-	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
 
 	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
 
@@ -469,18 +466,17 @@ function mediatags_process_update()
 		
 	$media_tag_slug = sanitize_title_with_dashes($media_tag_slug);
 
-
-	//echo "media_tag_name=[".$media_tag_name."]<br />";
-	//echo "media_tag_slug=[".$media_tag_slug."]<br />";
-	
 	if ( '' === $media_tag_slug )
 		return;
 
+	if (!function_exists('wp_redirect'))
+		require_once(ABSPATH . 'wp-includes/pluggable.php');
+
 	$ret = wp_update_term($mediatag_ID, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug, 'name' => $media_tag_name));
 	if ( $ret && !is_wp_error( $ret ) ) {
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=3");
+		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=3");
 	} else {
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=media-tags/meta_tags.php&message=5");
+		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=5");
 	}
 	exit;
 }
@@ -501,7 +497,7 @@ function mediatags_process_edit($mediatag_ID)
 	<h2><?php _e('Edit Media Tag'); ?></h2>
 	<div id="ajax-response"></div>
 	<form name="edittag" id="edittag" method="post" class="validate"
-			action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=media-tags/meta_tags.php">
+			action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=<?php echo ADMIN_MENU_KEY; ?>">
 		<input type="hidden" name="action" value="updatemediatag" />
 		<input type="hidden" name="mediatag_ID" value="<?php echo $tag->term_id ?>" />
 	<?php wp_original_referer_field(true, 'previous'); wp_nonce_field('update-tag_' . $mediatag_ID); ?>
@@ -528,6 +524,9 @@ function mediatags_process_edit($mediatag_ID)
 function mediatags_process_inline_save()
 {
 	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
+	// Hate that I have to move this local. 
+	
+	require_once(ABSPATH . 'wp-includes/pluggable.php');
 	
 	media_tags_register_columns();
 
@@ -547,5 +546,183 @@ function mediatags_process_inline_save()
 		die( __('Tag not updated.') );
 	}
 }
+
+function mediatag_upload_tab($tabs='')
+{
+	$tabs['mediatags'] = __('Media Tags');
+	return $tabs;
+}
+
+function media_upload_mediatags()
+{
+	if ( isset($_POST['send']) ) {
+		// Return it to TinyMCE
+		return media_send_to_editor($html);
+	}
+	return wp_iframe( 'media_upload_mediatags_form', $errors );
+}
+
+function media_upload_mediatags_form($errors)
+{
+	global $wpdb, $wp_query, $wp_locale, $type, $tab, $post_mime_types, $ngg;
+	
+	media_upload_header();
+
+	$post_id 	= intval($_REQUEST['post_id']);
+	$galleryID 	= 0;
+	$total 		= 1;
+	$picarray 	= false;
+	
+	$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?type={$_POST['type']}&tab=library&post_id=$post_id";
+	?>
+	<?php /* ?>
+	<form id="filter" action="<?php echo $form_action_url; ?>" method="get">
+	<input type="hidden" name="type" value="<?php echo esc_attr( $type ); ?>" />
+	<input type="hidden" name="tab" value="library<?php //echo esc_attr( $tab ); ?>" />
+	<input type="hidden" name="post_id" value="<?php echo (int) $post_id; ?>" />
+	<input type="hidden" name="post_mime_type" 
+		value="<?php echo isset( $_GET['post_mime_type'] ) ? esc_attr( $_GET['post_mime_type'] ) : ''; ?>" />
+
+	<p id="media-search" class="search-box">
+		<label class="screen-reader-text" for="media-search-input"><?php _e('Search Media by Media Tags');?>:</label>
+		<input type="text" id="media-search-input" name="s" value="<?php the_search_query(); ?>" />
+		<input type="submit" value="<?php esc_attr_e( 'Search Media' ); ?>" class="button" />
+	</p>
+	</form>
+	<?php */ ?>
+	<div style="clear:both"></div>
+	<?php
+	$mediatag_items = get_mediatags();
+	
+/*	
+	$page_links = paginate_links( array(
+		'base' => add_query_arg( 'paged', '%#%' ),
+		'format' => '',
+		'prev_text' => __('&laquo;'),
+		'next_text' => __('&raquo;'),
+		'total' => ceil(count($mediatag_items) / 10),
+		'current' => $_GET['paged']
+	));
+
+	if ( $page_links )
+		echo "<div class='tablenav-pages'>$page_links</div>";
+*/
+	?>	
+	
+	<form action="">
+	<div id="media-items">
+	<?php
+		if ($mediatag_items)
+		{
+			foreach($mediatag_items as $mediatag_item)
+			{
+				?>
+				<div id="mediatag-item-<?php echo $mediatag_item->term_id; ?>" class="media-item">
+					<div class="filename" style="display: block; float: left; width: 70%"><?php 
+						echo $mediatag_item->name; ?></div>
+						
+						
+						
+					<div class="mediatag-item-count" 
+						style="display: block; float: right; width: 10%; line-height:36px;overflow:hidden;padding:0 10px;">
+					<?php 
+						$mediatag_count = ( $mediatag_item->count > 0 ) ? "<a href='".
+						$form_action_url."&mediatag_id=$mediatag_item->term_id'>$mediatag_item->count</a>" : $count;
+						echo $mediatag_count;
+					?>
+					</div>
+				</div>
+				<?php
+			}
+		}
+		//echo "mediatag_items<pre>"; print_r($mediatag_items); echo "</pre>";
+	?>
+	</div>
+	</form>
+	<?php
+}
+
+function mediatags_settings_panel()
+{
+	if (isset($_REQUEST))
+	{
+		//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
+		if (isset($_REQUEST['mediatag_google_plugin']))
+		{
+			if (strtolower($_REQUEST['mediatag_google_plugin']) == strtolower("yes"))
+				$mediatag_google_plugin = "yes";
+			else
+				$mediatag_google_plugin = "no";
+
+			update_option( 'mediatag_google_plugin', $mediatag_google_plugin );
+			$update_message = "Media Tags Settings have been updated.";
+		}
+	}
+	$title = __('Media Tags');
+	?>
+	<div class="wrap nosubsub">
+		<?php screen_icon(); ?>
+		<h2><?php echo $title; ?></h2>
+		<?php 
+			if ( strlen($update_message)) { 
+				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
+			} 
+		?>
+		<form class="search-form" method="get" action="<?php echo get_option('siteurl') ?>/wp-admin/options-general.php">
+			<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY ?>" />
+			<p><strong>This admin panel provides support functions for Third-Party plugins</strong></p>
+
+			<?php 
+			$mediatag_google_plugin = get_option('mediatag_google_plugin'); 
+			if (!$mediatag_google_plugin)
+				$mediatag_google_plugin = "no";
+			?>
+			<p>Include Media-Tag URLs in your Google Sitemap XML file? (Requires the install of the <a
+				 href="http://wordpress.org/extend/plugins/google-sitemap-generator/">Google Sitemaps XML</a> plugin)<br />
+				<select id="mediatag_google_plugin" name="mediatag_google_plugin">
+					<option selected="selected" value="no">No</option>
+					<option <?php if ($mediatag_google_plugin == "yes"){ echo ' selected="selected" ';} ?> value="yes">Yes</option>
+				</select>
+			</p>
+
+
+			<?php
+			
+			
+			
+			?>
+			<p class="submit">
+			<input type="submit" name="Submit" value="<?php _e('Update Options', 'mt_trans_domain' ) ?>" />
+			</p>
+		</form>
+	</div>
+	<?php
+}
+
+function mediatags_google_sitemap_pages()
+{
+	$mediatag_google_plugin = get_option('mediatag_google_plugin');
+	if ((!$mediatag_google_plugin) || ($mediatag_google_plugin != "yes"))
+		return;
+		
+	$generatorObject = &GoogleSitemapGenerator::GetInstance(); //Please note the "&" sign!
+	if($generatorObject!=null) 
+	{
+		$mediatag_items = get_mediatags();
+		if ($mediatag_items)
+		{
+			foreach($mediatag_items as $mediatag_item)
+			{
+				$mediatag_permalink = get_mediatag_link($mediatag_item->term_id);
+				if (strlen($mediatag_permalink))
+				{
+					$generatorObject->AddUrl($mediatag_permalink, time(), "daily", 0.5);
+				}				
+			}
+		}
+	}	
+}
+
+
 
 ?>

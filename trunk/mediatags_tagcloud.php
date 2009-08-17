@@ -18,7 +18,7 @@ function mediatags_tag_cloud( $args = '' ) {
 
 	$mediatags_structure = $wp_rewrite->front . MEDIA_TAGS_URL . "/".$mediatags_token;	
 	foreach ( $mediatags as $key => $mediatag ) {
-		$mediatag_link = mediatags_get_link( $mediatag->term_id );
+		$mediatag_link = get_mediatag_link( $mediatag->term_id );
 		if ( is_wp_error( $mediatag_link ) )
 			return false;
 

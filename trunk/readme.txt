@@ -3,8 +3,8 @@ Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
-Tested up to: 2.8.3
-Stable tag: 2.1.3
+Tested up to: 2.8.4
+Stable tag: 2.2
 
 == Description ==
 
@@ -131,6 +131,14 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+
+= 2.2 =
+2009-08-16: Changes include:
+ 	* New Media Tags tab on the media upload popup. Now you can search by the Media Tag items. Functionality similar to Media section.
+	* Now you can control the permalink prefix which was previously hard-coded as '/media-tags/'. Go to Settings -> Permalinks. You should see a new input field below the Category and Tag fields. This lets you use something unique to your site.
+	* Integration with some other plugins. The first to be added is the famous Google XML Sitemaps plugin. Now when you build your XML Sitemap you can include Media Tag URLs just like WordPress Categories and Tags. Look for the options under Settings -> Media Tags (New menu).
+	* Some general code cleanup. Namely a conflict the Media Tags plugin was causing with Role Scoper and some other plugins. 
+	* Renamed the original plugin file from 'meta_tags.php' to 'media_tags.php'.
 
 = 2.1.3 =
 * 2009-08-06: Changes include a addition of new template function 'single_mediatag_title()' for use on the archive.php template or the new mediatag.php template file. Thanks to Carlos for the comment regarding this. http://www.codehooligans.com/2009/07/15/media-tags-20-released/comment-page-1/#comment-42956
