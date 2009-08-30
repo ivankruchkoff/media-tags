@@ -1,4 +1,7 @@
 <?php
+define('MEDIA_TAGS_VERSION', "2.0");
+define('MEDIA_TAGS_DATA_VERSION', "2.0");
+
 define('MEDIA_TAGS_TAXONOMY', 'media-tags');
 
 define('ADMIN_MENU_KEY', 'media-tags');

@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
 Tested up to: 2.8.4
-Stable tag: 2.2
+Stable tag: 2.2.5
 
 == Description ==
 
@@ -30,7 +30,7 @@ Speaking of template tags you can now have even more control over the display of
 Just want to display attachments in a post or page? Use the new media tags shortcodes.
 
  
-[Plugin Homepage](http://www.codehooligans.com/2009/07/15/media-tags-20-released/ "Media-Tags Plugin")
+[Plugin Homepage](http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/ "Media-Tags Plugin")
 
 
 == Installation ==
@@ -131,6 +131,22 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+
+= 2.2.5 -
+2009-08-30: Changes Include:
+* Bug fixes to Admin screens. Namely one but for the Permalink slug field. 
+
+* Added a 'View' option on the Media Tags Management screen on the quite menu options. This will let you preview the media-tag item in your theme. 
+
+* Added new function for mediatags_cloud(); This will generate the tag cloud or tags. Note this new function is a wrapper for the new WordPress core function wp_tg_cloud() added in 2.8. If used on an older version of WordPress there will be no output. http://codex.wordpress.org/Template_Tags/wp_tag_cloud
+
+* Added a column to the Media Library view. This new column lists the item's media tags. The content in this column is much like the Tags column on the Posts listing. The Media Tag is linked so it will filter the Media Library display. Thanks to the many commentors for that simple item. 
+
+* Added some logic to split the media tags into sections on both the Media Library item view as well as the Media Upload view. The thought here is to display the media tags in three sets. The first set is the items' select media-tags. The second set is the common media tags. The third set is the uncommon media tags.
+
+* Code cleanup.
+
+* Coming in some future release will be a bulk management option. This option will allow you to select item(s) from your Media Library and set the media tag. Still working on the interface logic. 
 
 = 2.2 =
 2009-08-16: Changes include:

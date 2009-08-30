@@ -1,42 +1,38 @@
 <?php
 /*
 Plugin Name: Media Tags
-Plugin URI: http://www.codehooligans.com/2009/07/15/media-tags-20-released/
+Plugin URI: http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.2
+Version: 2.2.5
 Author URI: http://www.codehooligans.com
 */
 
 include_once ( dirname(__FILE__) . "/mediatags_config.php");
 include_once ( dirname(__FILE__) . '/mediatags_admin.php' );
 include_once ( dirname(__FILE__) . "/mediatags_rewrite.php");
-//include_once ( dirname(__FILE__) . "/mediatags_tagcloud.php");
 include_once ( dirname(__FILE__) . "/mediatags_template_functions.php");
 include_once ( dirname(__FILE__) . "/mediatags_shortcodes.php");
 include_once ( dirname(__FILE__) . "/mediatags_settings.php");
-
+include_once ( dirname(__FILE__) . "/mediatags_thirdparty.php");
 
 class MediaTags {
 
-	var $plugin_version;
 	var $plugindir_url;
-	
-	var $taxonomy_name; 
 	
 	function MediaTags()
 	{
-		$this->plugin_version = "2.0";
-		
 		global $wp_version;
 		
 		$plugindir_node 						= dirname(plugin_basename(__FILE__));	
 		$this->plugindir_url 					= get_bloginfo('wpurl') . "/wp-content/plugins/". $plugindir_node;
 	
-		add_filter('attachment_fields_to_edit', array(&$this,'show_media_tag_fields_to_edit'), 11, 2);
-		add_filter('attachment_fields_to_save', array(&$this,'process_media_attachment_fields_to_save'), 11, 2);
+		add_filter('attachment_fields_to_edit', 'mediatags_show_fields_to_edit', 11, 2);
+		add_filter('attachment_fields_to_save', 'meditags_process_attachment_fields_to_save', 11, 2);
+		add_filter( 'manage_media_columns', 'mediatags_library_column_header' );
+		add_action( 'manage_media_custom_column', 'mediatags_library_column_row', 10, 2 );
 
-		add_action('delete_attachment', array(&$this,'delete_attachment_proc'));
+		add_action('delete_attachment', 'mediatags_delete_attachment_proc');
 
 		add_action('admin_head', array(&$this,'admin_head_proc'));
 
@@ -49,116 +45,54 @@ class MediaTags {
 		add_filter('media_upload_tabs', 'mediatag_upload_tab');
 		add_action('media_upload_mediatags', 'media_upload_mediatags');
 
+		// This MAY not be needed. This was a safety catch for the non-Permalink URLs.
+		add_filter('term_link', 'mediatags_term_link', 20, 2);
 
-		// Support for the Google Sitemap XML plugin
-		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');
-
-				
 		if (function_exists('add_shortcode'))
 			add_shortcode('media-tags', 'mediatags_shortcode_handler');
 
 		// Add our sub-panel to the Media section. But only if WP 2.7 or higher!
 		if ($wp_version >= "2.7")
 		{
-			add_action('admin_menu', array(&$this, 'admin_panels'));
+			add_action('admin_menu', 'mediatags_admin_panels');
 		}
+
+		$this->register_taxonomy();
 
 		if ((isset($_REQUEST['page']))
 		 && ($_REQUEST['page'] == ADMIN_MENU_KEY))
 		{
-			$this->register_taxonomy();
 			mediatags_process_actions();
 		}		
+
+		// Support for the Google Sitemap XML plugin
+		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');				
 	}
 
 	function init() {
-		wp_enqueue_script('jquery-form'); 
-		$this->register_taxonomy();
-
 		mediatags_init_rewrite();
-		
+			
 		// Checks ths plugin version again the legacy data
-		$this->plugin_version_check();
+		if ((isset($_REQUEST['activate'])) || ($_REQUEST['activate'] == true))
+		{
+			$this->mediatags_activate_plugin();
+		}
 	}
 
 	function admin_init()
 	{
+		wp_enqueue_script('jquery-form'); 
 		if (function_exists('mediatags_settings_api_init'))
 			mediatags_settings_api_init();		
 	}
 		
-	function plugin_version_check()
-	{
-		// We get the version from the main WP wp_options table. 
-		$media_tags_version = get_option('media-tags-version');
-		
-		// If we don't find the setting we can assume the plugin version is either
-		//	a) Never been installed
-		//	b) An older version was installed which means we need to convert. 
-		
-		
-		if (!$media_tags_version)
-		{
-			// Here we need to convert the existing legacy media tags into the terms table. 
-			include_once ( dirname (__FILE__) . '/mediatags_legacy_convert.php' );
-			$legacy_master_media_tags = legacy_load_master_media_tags();
-			if ($legacy_master_media_tags)
-			{
-				foreach($legacy_master_media_tags as $legacy_slug => $legacy_name)
-				{
-					if ( ! ($id = is_term( $legacy_slug, MEDIA_TAGS_TAXONOMY ) ) )
-						wp_insert_term($legacy_name, MEDIA_TAGS_TAXONOMY, array('slug' => $legacy_slug));
-				}
-				//$media_tags_tmp = (array) get_terms(MEDIA_TAGS_TAXONOMY, 'hide_empty=0');
-				//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";				
-			}
-			
-			// Now we need to grab all the attachments in the system. Then for each one grab the meta info
-			// load the media tags then set the terms relationship
-			$post_attachments = get_posts('post_type=attachment&numberposts=-1');
-			if ($post_attachments)
-			{
-				foreach($post_attachments as $attachment)
-				{
-					$legacy_media_meta = wp_get_attachment_metadata($attachment->ID);
-					if (isset($legacy_media_meta['image_meta']['media_tags']))
-						$legacy_post_media_tags_str = $legacy_media_meta['image_meta']['media_tags'];
-					else
-						$legacy_post_media_tags_str = "";
-					
-					$legacy_post_media_tags_array = legacy_get_post_media_tags($attachment->ID, $legacy_post_media_tags_str);
-					if ($legacy_post_media_tags_array)
-					{
-						wp_set_object_terms($attachment->ID, $legacy_post_media_tags_array, MEDIA_TAGS_TAXONOMY);
-					}
-				}				
-
-				foreach($post_attachments as $attachment)
-				{
-					$media_tags_tmp 	= (array)wp_get_object_terms($attachment->ID, MEDIA_TAGS_TAXONOMY);
-				}
-			}
-			
-			// Then insert/update the options table with the current plugin version so we don't have to check each time. 
-			update_option('media-tags-version', $this->plugin_version);
-		}
-		else if ($media_tags_version < $this->plugin_version)
-		{
-			// Here we might need to do something for other variations. 
-		}
-	}
-
 	function register_taxonomy() {
 		$args = array();					
+		$args['rewrite'] = array('slug' => MEDIA_TAGS_TAXONOMY);
+		$args['query_var'] = '?'.MEDIA_TAGS_TAXONOMY;		
 		register_taxonomy( MEDIA_TAGS_TAXONOMY, MEDIA_TAGS_TAXONOMY, $args );		
 	}
-	
-	function admin_panels()
-	{
-		add_media_page( "Media Tags", "Media Tags", 8, ADMIN_MENU_KEY, 'mediatags_admin_panel');
-		add_options_page('Media Tags', 'Media Tags', 8, ADMIN_MENU_KEY, 'mediatags_settings_panel');
-	}
-	
+
 	function admin_head_proc()
 	{
 		?>
@@ -168,137 +102,81 @@ class MediaTags {
 		<?php if ((isset($_REQUEST['page']))
 		 	&& ($_REQUEST['page'] == ADMIN_MENU_KEY))
 		{	?><script type="text/javascript" src="<?php echo $this->plugindir_url ?>/mediatags_inline_edit.js"></script><?php }
-	}
-	
-	function delete_attachment_proc($postid = '')
-	{
-		if (!$postid) return;
 		
-//		$tt_ids = wp_get_object_terms($postid, MEDIA_TAGS_TAXONOMY, 'fields=tt_ids');
-//		echo "tt_ids<pre>"; print_r($tt_ids); echo "</pre>";
-//		exit;
-		wp_delete_object_term_relationships($postid, array(MEDIA_TAGS_TAXONOMY));	
-		//wp_update_term_count( $postid, MEDIA_TAGS_TAXONOMY);
-	}
-	
-	
-	
-	function show_media_tag_fields_to_edit($form_fields, $post) 
-	{	
-		$post_media_tags_fields = $this->get_media_fields($post->ID);
-		if (strlen($post_media_tags_fields))
-			$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags 
-				separated with comma. Or select from the tag(s) below" . $post_media_tags_fields;
-		else
-			$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags separated with comma.";
+		?>
+		<script type="text/javascript">
+		//<![CDATA[
+		jQuery(document).ready(function(){
+
+			jQuery('div#media-tags-list-used').show();
+			jQuery('div#media-tags-list-common').hide();
+			jQuery('div#media-tags-list-uncommon').hide();
+
+			jQuery("a#media-tags-show-hide-used").click(function () {
+				jQuery("div#media-tags-list-used").slideToggle('slow');
+				jQuery(this).text(jQuery(this).text() == 'Show Media Tags for this attachment' ? 'Media Tags for this attachment' : 'Show Media Tags for this attachment');
+				return false;
+			});
+
+			jQuery("a#media-tags-show-hide-common").click(function () {
+				jQuery("div#media-tags-list-common").slideToggle('slow');
+				jQuery(this).text(jQuery(this).text() == 'Show Common Media Tags' ? 'Hide Common Media Tags' : 'Show Common Media Tags');
+				return false;
+			});
+
+			jQuery("a#media-tags-show-hide-uncommon").click(function () {
+				jQuery("div#media-tags-list-uncommon").slideToggle('slow');
+				jQuery(this).text(jQuery(this).text() == 'Show Uncommon Media Tags' ? 'Hide Uncommon Media Tags' : 'Show Uncommon Media Tags');
+				return false;
+			});
+
+
+/*
+
+$("li").toggle(
+      function () {
+        $(this).css({"list-style-type":"disc", "color":"blue"});
+      },
+      function () {
+        $(this).css({"list-style-type":"disc", "color":"red"});
+      },
+      function () {
+        $(this).css({"list-style-type":"", "color":""});
+      }
+    );
+
+
+			jQuery('a#media-tags-show-hide-common').click(function () {	
+				jQuery('div#media-tags-list-common').toggle(
+					function () {
+						jQuery('a#media-tags-show-hide-common').text('Hide');
+						jQuery('div#media-tags-list-common').show();
+					},
+					function () {
+						jQuery('div#media-tags-list-common a').text('Show');
+						jQuery('div#media-tags-list-common').hide();
+					}
+				);
+				return false;
+			});
+			*/
+		});
+		//]]>
+		</script>
 		
-        $form_fields['media-meta'] = array(
-           	'label' => __('Media tags:'),
-	   		'input' => 'html',
-	   		'html' => "<input type='text' name='attachments[$post->ID][media_tags_input]' 
-				id='attachments[$post->ID][media_tags_input]'
-	       		size='50' value='' />
-			$post_media_tags_fields "
-		);
-		//echo "form_fields<pre>"; print_r($form_fields); echo "</pre>";
-	    return $form_fields;
-	}
-
-
-	function get_media_fields($post_id)
-	{
-		$media_tags_tmp 	= (array)wp_get_object_terms($post_id, MEDIA_TAGS_TAXONOMY);
-		//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";
+		<?php
 		
-		$post_media_tags = array();
-		if ($media_tags_tmp)
-		{
-			$post_media_tags = array(); 
-			foreach($media_tags_tmp as $p_media_tag)
-			{
-				$post_media_tags[$p_media_tag->slug] = $p_media_tag;
-			}
-			//echo "post_media_tags<pre>"; print_r($post_media_tags); echo "</pre>";
-		}
-
-		$master_media_tags_array = $this->load_master_media_tags();	
-		if ($master_media_tags_array)
-		{
-			//echo "master_media_tags_array<pre>"; print_r($master_media_tags_array); echo "</pre>";
-			foreach($master_media_tags_array  as $idx => $tag_item)
-			{
-				//if (!$post_media_tags) continue;
-				
-				if (array_key_exists($idx, $post_media_tags) !== false)
-				{
-					$selected_tag = ' checked="checked" ';
-				}
-				else
-					$selected_tag = '';
-			
-				$master_media_tag_fields .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
-					name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
-					<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
-			}
-			if (strlen($master_media_tag_fields))
-				$master_media_tag_fields = '<ul id="media-tags-list">'. $master_media_tag_fields . '</ul>';
-		}
-		return $master_media_tag_fields;
 	}
-
-	function process_media_attachment_fields_to_save($post, $attachment) 
+		
+	function mediatags_activate_plugin()
 	{
-		$media_tags_array = array();
+		// First see if we need to convert the data. This really only applied to pre-Taxonomy versions
+		include_once ( dirname (__FILE__) . '/mediatags_legacy_convert.php' );
+		mediatags_plugin_version_check();
 
-		if (isset($attachment['media_tags_checkbox']))
-		{
-			foreach($attachment['media_tags_checkbox']  as $tag_idx => $tag_val)
-			{
-				$media_tags_array[] = $tag_idx;
-			}
-		}
-
-		if (strlen($attachment['media_tags_input']))
-		{
-			$tags_tmp_array = split(',', $attachment['media_tags_input']);
-			if ($tags_tmp_array)
-			{
-				foreach($tags_tmp_array as $idx => $tag_val)
-				{
-					$tag_slug = sanitize_title_with_dashes($tag_val);
-					
-					if ( ! ($id = is_term( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
-						wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
-					
-					$media_tags_array[] = $tag_slug;
-				}
-			}
-		}
-
-		if ($media_tags_array)
-		{
-			wp_set_object_terms($post['ID'], $media_tags_array, MEDIA_TAGS_TAXONOMY);			
-		}
-		else
-		{
-			wp_set_object_terms($post['ID'], "", MEDIA_TAGS_TAXONOMY);				
-		}
-	    return $post;
+		mediatags_reconcile_counts();
 	}
-
-	function load_master_media_tags()
-	{
-		$media_tags_tmp = (array) get_terms(MEDIA_TAGS_TAXONOMY, 'hide_empty=0');
-		if ($media_tags_tmp)
-		{
-			$master_media_tags_array = array(); 
-			foreach($media_tags_tmp as $m_media_tag)
-			{
-				$master_media_tags_array[$m_media_tag->slug] = $m_media_tag;
-			}
-			return $master_media_tags_array;
-		}
-	}
+	
 	
 	// Still support the original legacy version of the function. 
 	// Force use of the post_parent parameter. Users wanting to search globally across all media tags should

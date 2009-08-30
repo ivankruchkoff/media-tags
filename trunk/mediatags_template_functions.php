@@ -105,6 +105,7 @@ function get_mediatag_link( $mediatag_id ) {
 function the_mediatags( $before = 'Media-Tags: ', $sep = ', ', $after = '' ) {
 	return the_terms( 0, MEDIA_TAGS_TAXONOMY, $before, $sep, $after );
 }
+
 function get_attachments_by_media_tags($args='')
 {
 	global $mediatags;
@@ -123,4 +124,16 @@ function single_mediatag_title()
 		}
 	}	
 }
+
+function mediatags_cloud( $args='' ) {
+	if (function_exists('wp_tag_cloud'))
+	{
+		$defaults = array(
+			'taxonomy' => MEDIA_TAGS_TAXONOMY		
+		);
+		$r = wp_parse_args( $args, $defaults );
+		return wp_tag_cloud( $r );
+	}
+}
+
 ?>

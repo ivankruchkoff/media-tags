@@ -167,4 +167,11 @@ function mediatags_postsJoin($join)
 	return $join;	
 }
 
+function mediatags_term_link($termlink, $term)
+{
+	if ($term->taxonomy == MEDIA_TAGS_TAXONOMY)
+		$termlink = get_mediatag_link($term->term_id);
+	
+	return $termlink;
+}
 ?>

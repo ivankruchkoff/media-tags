@@ -1,6 +1,165 @@
 <?php
+function mediatags_admin_panels()
+{
+	add_media_page( "Media Tags", "Media Tags", 8, ADMIN_MENU_KEY, 'mediatags_mgmt_panel');
+	add_options_page('Media Tags', 'Media Tags', 8, ADMIN_MENU_KEY, 'mediatags_settings_panel');
+}
 
-function mediatags_admin_panel() {
+function mediatags_show_fields_to_edit($form_fields, $post) 
+{	
+	$post_media_tags_fields = mediatags_get_fields($post->ID);
+	if (strlen($post_media_tags_fields))
+		$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags 
+			separated with comma. Or select from the tag(s) below" . $post_media_tags_fields;
+	else
+		$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags separated with comma.";
+	
+    $form_fields['media-meta'] = array(
+       	'label' => __('Media tags:'),
+   		'input' => 'html',
+   		'html' => "<input type='text' name='attachments[$post->ID][media_tags_input]' 
+			id='attachments[$post->ID][media_tags_input]'
+       		size='50' value='' />
+		$post_media_tags_fields "
+	);
+	//echo "form_fields<pre>"; print_r($form_fields); echo "</pre>";
+    return $form_fields;
+}
+
+
+function mediatags_get_fields($post_id)
+{
+	$media_tags_tmp 	= (array)wp_get_object_terms($post_id, MEDIA_TAGS_TAXONOMY);
+	//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";
+	
+	$post_media_tags = array();
+	if ($media_tags_tmp)
+	{
+		$post_media_tags = array(); 
+		foreach($media_tags_tmp as $p_media_tag)
+		{
+			$post_media_tags[$p_media_tag->slug] = $p_media_tag;
+		}
+		//echo "post_media_tags<pre>"; print_r($post_media_tags); echo "</pre>";
+	}
+
+	$master_media_tags_array = mediatags_load_master();	
+	if ($master_media_tags_array)
+	{
+		//echo "master_media_tags_array<pre>"; print_r($master_media_tags_array); echo "</pre>";
+		$master_media_tag_fields_tmp = array();
+		
+		foreach($master_media_tags_array  as $idx => $tag_item)
+		{
+			if (array_key_exists($idx, $post_media_tags) !== false)
+			{
+				$selected_tag = ' checked="checked" ';
+				$master_media_tag_fields_tmp['used_item'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
+					name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
+					<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+			}
+			else
+			{
+				$selected_tag = '';
+
+				if ($tag_item->count > 0)
+				{
+					$master_media_tag_fields_tmp['used_all'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
+						name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
+						<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+				}
+				else
+				{
+					$master_media_tag_fields_tmp['unused_all'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
+						name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
+						<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+				}
+			}
+		}
+		if (strlen($master_media_tag_fields_tmp['used_item']))
+			$master_media_tag_fields .= '<a id="media-tags-show-hide-used" href="#">Media Tags for this attachment</a>
+				<div id="media-tags-list-used"><ul class="media-tags-list">'. 
+					$master_media_tag_fields_tmp['used_item'] . '</ul></div>';
+		if (strlen($master_media_tag_fields_tmp['used_all']))
+			$master_media_tag_fields .= '<a id="media-tags-show-hide-common" href="#">Show Common Media Tags</a>
+				<div id="media-tags-list-common"><ul class="media-tags-list">'. $master_media_tag_fields_tmp['used_all'] . '</ul></div>';
+		if (strlen($master_media_tag_fields_tmp['unused_all']))
+			$master_media_tag_fields .= '<a id="media-tags-show-hide-uncommon" href="#">Show Uncommon Media Tags</a>
+				<div id="media-tags-list-uncommon"><ul class="media-tags-list">'.$master_media_tag_fields_tmp['unused_all'] . '</ul></div>';
+
+
+//		if (strlen($master_media_tag_fields))
+//			$master_media_tag_fields = '<ul id="media-tags-list">'. $master_media_tag_fields . '</ul>';
+	}
+	return $master_media_tag_fields;
+}
+
+function meditags_process_attachment_fields_to_save($post, $attachment) 
+{
+	$media_tags_array = array();
+
+	if (isset($attachment['media_tags_checkbox']))
+	{
+		foreach($attachment['media_tags_checkbox']  as $tag_idx => $tag_val)
+		{
+			$media_tags_array[] = $tag_idx;
+		}
+	}
+
+	if (strlen($attachment['media_tags_input']))
+	{
+		$tags_tmp_array = split(',', $attachment['media_tags_input']);
+		if ($tags_tmp_array)
+		{
+			foreach($tags_tmp_array as $idx => $tag_val)
+			{
+				$tag_slug = sanitize_title_with_dashes($tag_val);
+				
+				if ( ! ($id = is_term( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
+					wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
+				
+				$media_tags_array[] = $tag_slug;
+			}
+		}
+	}
+
+	if ($media_tags_array)
+	{
+		wp_set_object_terms($post['ID'], $media_tags_array, MEDIA_TAGS_TAXONOMY);			
+	}
+	else
+	{
+		wp_set_object_terms($post['ID'], "", MEDIA_TAGS_TAXONOMY);				
+	}
+    return $post;
+}
+
+function mediatags_load_master()
+{
+	$media_tags_tmp = (array) get_terms(MEDIA_TAGS_TAXONOMY, 'hide_empty=0');
+	if ($media_tags_tmp)
+	{
+		$master_media_tags_array = array(); 
+		foreach($media_tags_tmp as $m_media_tag)
+		{
+			$master_media_tags_array[$m_media_tag->slug] = $m_media_tag;
+		}
+		return $master_media_tags_array;
+	}
+}
+
+function mediatags_delete_attachment_proc($postid = '')
+{
+	if (!$postid) return;
+	
+//	$tt_ids = wp_get_object_terms($postid, MEDIA_TAGS_TAXONOMY, 'fields=tt_ids');
+//	echo "tt_ids<pre>"; print_r($tt_ids); echo "</pre>";
+//	exit;
+	wp_delete_object_term_relationships($postid, array(MEDIA_TAGS_TAXONOMY));	
+	//wp_update_term_count( $postid, MEDIA_TAGS_TAXONOMY);
+}
+
+function mediatags_mgmt_panel() {
 	require_once(ABSPATH . 'wp-includes/pluggable.php');
 
 	media_tags_register_columns();
@@ -224,60 +383,71 @@ function _media_tag_row( $tag, $class = '' ) {
 
 	$name = apply_filters( 'term_name', $tag->name );
 	$qe_data = get_term($tag->term_id, MEDIA_TAGS_TAXONOMY, object, 'edit');
-	$edit_link = $base_url ."&action=editmediatag&amp;mediatag_ID=$tag->term_id";
+	//$edit_link = $base_url ."&action=editmediatag&amp;mediatag_ID=$tag->term_id";
+	$edit_link = get_mediatag_admin_edit_link( $tag->term_id );
+	$view_link = get_mediatag_link($tag->term_id);
+
 		
-		$out = '';
-		$out .= '<tr id="tag-' . $tag->term_id . '"' . $class . '>';
-		$columns = get_column_headers('edit-media-tags');
-		$hidden = get_hidden_columns('edit-media-tags');
-		foreach ( $columns as $column_name => $column_display_name ) {
-			$class = "class=\"$column_name column-$column_name\"";
+	$out = '';
+	$out .= '<tr id="tag-' . $tag->term_id . '"' . $class . '>';
+	$columns = get_column_headers('edit-media-tags');
+	$hidden = get_hidden_columns('edit-media-tags');
+	foreach ( $columns as $column_name => $column_display_name ) {
+		$class = "class=\"$column_name column-$column_name\"";
 
-			$style = '';
-			if ( in_array($column_name, $hidden) )
-				$style = ' style="display:none;"';
+		$style = '';
+		if ( in_array($column_name, $hidden) )
+			$style = ' style="display:none;"';
 
-			$attributes = "$class$style";
+		$attributes = "$class$style";
 
-			switch ($column_name) {
-				case 'cb':
-					$out .= '<th scope="row" class="check-column"> <input type="checkbox" name="delete_media_tags[]" value="' . $tag->term_id . '" /></th>';
-					break;
-				case 'name':
-					$out .= '<td ' . $attributes . '><strong><a class="row-title" href="' . $edit_link . '" title="' . attribute_escape(sprintf(__('Edit "%s"'), $name)) . '">' . $name . '</a></strong><br />';
-					$actions = array();
-					$actions['edit'] = '<a href="' . $edit_link . '">' . __('Edit') . '</a>';
-					$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
-					$actions['delete'] = "<a class='submitdelete' href='" .
-					 wp_nonce_url(get_option('siteurl')
-					 ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
-					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . js_escape(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) { return true;}return false;\">" . __('Delete') . "</a>";
-					$action_count = count($actions);
-					$i = 0;
-					$out .= '<div class="row-actions">';
-					foreach ( $actions as $action => $link ) {
-						++$i;
-						( $i == $action_count ) ? $sep = '' : $sep = ' | ';
-						$out .= "<span class='$action'>$link$sep</span>";
-					}
-					$out .= '</div>';
-					$out .= '<div class="hidden" id="inline_' . $qe_data->term_id . '">';
-					$out .= '<div class="name">' . $qe_data->name . '</div>';
-					$out .= '<div class="slug">' . $qe_data->slug . '</div></div></td>';
-					break;
-				case 'slug':
-					$out .= "<td $attributes>$tag->slug</td>";
-					break;
-				case 'posts':
-					$attributes = 'class="posts column-posts num"' . $style;
-					$out .= "<td $attributes>$count</td>";
-					break;
-			}
+		switch ($column_name) {
+			case 'cb':
+				$out .= '<th scope="row" class="check-column"> <input type="checkbox" name="delete_media_tags[]" value="' 
+					. $tag->term_id . '" /></th>';
+				break;
+			
+			case 'name':
+				$out .= '<td ' . $attributes . '><strong><a class="row-title" href="' . $edit_link . '" title="' . 
+					attribute_escape(sprintf(__('Edit "%s"'), $name)) . '">' . $name . '</a></strong><br />';
+				$actions = array();
+				$actions['edit'] = '<a href="' . $edit_link . '">' . __('Edit') . '</a>';
+				$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
+				$actions['delete'] = "<a class='submitdelete' href='" . wp_nonce_url(get_option('siteurl')
+					."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
+					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . 
+					js_escape(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) 
+					{ return true;}return false;\">" . __('Delete') . "</a>";
+				$actions['view'] = '<a href="' . $view_link . '">' . __('View') . '</a>';
+
+				$action_count = count($actions);
+				$i = 0;
+				$out .= '<div class="row-actions">';
+				foreach ( $actions as $action => $link ) {
+					++$i;
+					( $i == $action_count ) ? $sep = '' : $sep = ' | ';
+					$out .= "<span class='$action'>$link$sep</span>";
+				}
+				$out .= '</div>';
+				$out .= '<div class="hidden" id="inline_' . $qe_data->term_id . '">';
+				$out .= '<div class="name">' . $qe_data->name . '</div>';
+				$out .= '<div class="slug">' . $qe_data->slug . '</div></div></td>';
+				break;
+
+			case 'slug':
+				$out .= "<td $attributes>$tag->slug</td>";
+				break;
+
+			case 'posts':
+				$attributes = 'class="posts column-posts num"' . $style;
+				$out .= "<td $attributes>$count</td>";
+				break;
 		}
+	}
 
-		$out .= '</tr>';
+	$out .= '</tr>';
 
-		return $out;
+	return $out;
 }
 
 
@@ -699,30 +869,92 @@ function mediatags_settings_panel()
 	<?php
 }
 
-function mediatags_google_sitemap_pages()
+function mediatags_reconcile_counts()
 {
-	$mediatag_google_plugin = get_option('mediatag_google_plugin');
-	if ((!$mediatag_google_plugin) || ($mediatag_google_plugin != "yes"))
-		return;
-		
-	$generatorObject = &GoogleSitemapGenerator::GetInstance(); //Please note the "&" sign!
-	if($generatorObject!=null) 
-	{
-		$mediatag_items = get_mediatags();
-		if ($mediatag_items)
-		{
-			foreach($mediatag_items as $mediatag_item)
-			{
-				$mediatag_permalink = get_mediatag_link($mediatag_item->term_id);
-				if (strlen($mediatag_permalink))
-				{
-					$generatorObject->AddUrl($mediatag_permalink, time(), "daily", 0.5);
-				}				
+	// This part of the function is to reconcile the counts on the mediatag items. Seems there was
+	// an issue in a previous version where the count could be wrong. 
+	$mediatag_items = get_mediatags();		
+	if ($mediatag_items) {
+	
+		foreach($mediatag_items as $mediatag_item) {
+
+			$media_attachments =  get_objects_in_term($mediatag_item->term_id, MEDIA_TAGS_TAXONOMY);
+			if ($media_attachments) {
+			
+				foreach($media_attachments as $media_idx => $media_attachment_id) {
+
+					if (!get_post($media_attachment_id))
+					{
+						mediatags_delete_attachment_proc($media_attachment_id);	
+					}
+				}					
 			}
 		}
-	}	
+	}
 }
 
 
+function mediatags_library_column_header( $cols ) {
+	$cols[MEDIA_TAGS_TAXONOMY] = "Media Tags";
+	return $cols;
+}
 
+function mediatags_library_column_row( $column_name, $id ) {
+
+	if ( $column_name == MEDIA_TAGS_TAXONOMY ) 
+	{
+		//$media_attachments =  get_objects_in_term($id, MEDIA_TAGS_TAXONOMY);
+		$media_attachments = get_the_terms( $id, MEDIA_TAGS_TAXONOMY );
+		if ($media_attachments)
+		{
+			$media_tag_list_items = "";
+			foreach($media_attachments as $media_idx => $media_attachment)
+			{
+				if (strlen($media_tag_list_items)) $media_tag_list_items .= ", ";
+				
+				$media_tag_list_items .= '<a href="'. 
+					get_mediatag_admin_library_link( $media_attachment->term_id). '">'.  $media_attachment->name. '</a>';				
+			}
+			echo $media_tag_list_items;
+		}
+	}
+}
+
+function get_mediatag_admin_edit_link( $mediatag_id ) {
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
+
+	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
+	if ( is_wp_error( $media_tag ) )
+		return $media_tag;
+
+	$edit_href = $base_url ."&action=editmediatag&amp;mediatag_ID=".$mediatag_id;
+
+	return $edit_href;
+}
+
+function get_mediatag_admin_search_link( $mediatag_id ) {
+
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
+
+	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
+	if ( is_wp_error( $media_tag ) )
+		return $media_tag;
+		
+	$edit_href = $base_url ."&action=searchmediatag&amp;s=".$media_tag->slug;
+
+	return $edit_href;
+}
+
+function get_mediatag_admin_library_link( $mediatag_id ) {
+
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?";
+
+	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
+	if ( is_wp_error( $media_tag ) )
+		return $media_tag;
+		
+	$edit_href = $base_url ."mediatag_id=".$media_tag->term_id;
+
+	return $edit_href;
+}
 ?>
