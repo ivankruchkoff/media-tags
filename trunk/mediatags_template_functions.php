@@ -73,11 +73,11 @@ function list_mediatags($args = '' ) {
 
 // Return the href link value for a given tag_id
 // modeled after WP get_tag_link() function
-function get_mediatag_link( $mediatag_id ) {
+function get_mediatag_link( $mediatag_id, $is_feed=false ) {
 	global $wp_rewrite;
 
 	$mediatag_link = "";
-	if ($wp_rewrite->using_permalinks())
+	if (isset($wp_rewrite) && $wp_rewrite->using_permalinks())
 	{
 		$mediatags_token = '%' . MEDIA_TAGS_QUERYVAR . '%';
 		$mediatag_link = $wp_rewrite->front . MEDIA_TAGS_URL . "/".$mediatags_token;	
@@ -95,7 +95,19 @@ function get_mediatag_link( $mediatag_id ) {
 	} 
 	else {
 		$mediatag_link = str_replace( '%media-tag%', $mediatag_slug, $mediatag_link );
-		$mediatag_link = get_option( 'home' ) . user_trailingslashit( $mediatag_link, 'category' );
+		$mediatag_link = get_option( 'home' ) . user_trailingslashit( $mediatag_link );
+	}
+
+	if ($is_feed == true)
+	{
+		if (isset($wp_rewrite) && $wp_rewrite->using_permalinks())
+		{
+			$mediatag_link .= "feed/";
+		}
+		else
+		{
+			$mediatag_link .= "&feed=rss2";
+		}
 	}
 
 	return apply_filters( 'get_mediatag_link', $mediatag_link, $mediatag_id );

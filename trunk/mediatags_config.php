@@ -17,5 +17,6 @@ define('MEDIA_TAGS_URL', $mediatag_base);
 define('MEDIA_TAGS_QUERYVAR', 'media-tag');
 
 define('MEDIA_TAGS_TEMPLATE', 'mediatag.php');
+define('MEDIA_TAGS_RSS_TEMPLATE', 'mediatags_rss.php');
 
 ?>

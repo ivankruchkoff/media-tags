@@ -825,8 +825,17 @@ function mediatags_settings_panel()
 				$mediatag_google_plugin = "no";
 
 			update_option( 'mediatag_google_plugin', $mediatag_google_plugin );
-			$update_message = "Media Tags Settings have been updated.";
 		}
+		if (isset($_REQUEST['mediatag_rss_feed']))
+		{
+			if (strtolower($_REQUEST['mediatag_rss_feed']) == strtolower("yes"))
+				$mediatag_rss_feed = "yes";
+			else
+				$mediatag_rss_feed = "no";
+
+			update_option( 'mediatag_rss_feed', $mediatag_rss_feed );
+		}
+		$update_message = "Media Tags Settings have been updated.";
 	}
 	$title = __('Media Tags');
 	?>
@@ -847,6 +856,7 @@ function mediatags_settings_panel()
 			if (!$mediatag_google_plugin)
 				$mediatag_google_plugin = "no";
 			?>
+			<h3>Google XML Sitemaps</h3>
 			<p>Include Media-Tag URLs in your Google Sitemap XML file? (Requires the install of the <a
 				 href="http://wordpress.org/extend/plugins/google-sitemap-generator/">Google Sitemaps XML</a> plugin)<br />
 				<select id="mediatag_google_plugin" name="mediatag_google_plugin">
@@ -854,7 +864,14 @@ function mediatags_settings_panel()
 					<option <?php if ($mediatag_google_plugin == "yes"){ echo ' selected="selected" ';} ?> value="yes">Yes</option>
 				</select>
 			</p>
-
+			<hr />
+			<h3>RSS Feed for Media Tags</h3>
+			<p>The Media Tags plugin now supports RSS feed when viewing an archive. For when viewing the URL http://www.mysite.com/media-tags/some-tag/ you can now access the RSS listing by adding '/feed' to the end of the URL as in http://www.mysite.com/media-tags/some-tag/feed/</p>
+			
+				<select id="mediatag_rss_feed" name="mediatag_rss_feed">
+					<option selected="selected" value="yes">Yes</option>
+					<option <?php if ($mediatag_rss_feed == "no"){ echo ' selected="selected" ';} ?> value="no">No</option>
+				</select>
 
 			<?php
 			

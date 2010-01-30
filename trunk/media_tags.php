@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.2.5
+Version: 2.2.6
 Author URI: http://www.codehooligans.com
 */
 
@@ -15,6 +15,8 @@ include_once ( dirname(__FILE__) . "/mediatags_template_functions.php");
 include_once ( dirname(__FILE__) . "/mediatags_shortcodes.php");
 include_once ( dirname(__FILE__) . "/mediatags_settings.php");
 include_once ( dirname(__FILE__) . "/mediatags_thirdparty.php");
+include_once ( dirname(__FILE__) . "/mediatags_feed.php");
+include_once ( dirname(__FILE__) . "/mediatags_export_import.php");
 
 class MediaTags {
 
@@ -35,7 +37,8 @@ class MediaTags {
 		add_action('delete_attachment', 'mediatags_delete_attachment_proc');
 
 		add_action('admin_head', array(&$this,'admin_head_proc'));
-
+		add_action('wp_head', 'add_mediatags_alternate_link');
+		
 		add_action( 'init', array(&$this, 'init') );
 		add_action( 'admin_init', array(&$this, 'admin_init') );
 		
@@ -44,6 +47,10 @@ class MediaTags {
 
 		add_filter('media_upload_tabs', 'mediatag_upload_tab');
 		add_action('media_upload_mediatags', 'media_upload_mediatags');
+
+		// Handle Export/Import interaction
+		add_action('export_wp', 'mediatags_wp_export_metadata');
+		add_action('import_post_meta', 'mediatags_wp_import_metadata', 10, 3);
 
 		// This MAY not be needed. This was a safety catch for the non-Permalink URLs.
 		add_filter('term_link', 'mediatags_term_link', 20, 2);
@@ -283,7 +290,9 @@ $("li").toggle(
 					$search_terms_array[$search_term] = $terms_item;
 			}
 		}
-
+		
+		//echo "search_terms_array<pre>"; print_r($search_terms_array); echo "</pre>";
+		
 		$objects_ids_array = array();
 		if (count($search_terms_array))
 		{
@@ -294,7 +303,9 @@ $("li").toggle(
 					{				
 						$objects_ids = get_objects_in_term($search_term_item->term_id, MEDIA_TAGS_TAXONOMY);
 						if ($objects_ids)
-							$objects_ids_array[] = $objects_ids;
+							$objects_ids_array[$search_term_item->slug] = $objects_ids;
+						else
+							$objects_ids_array[$search_term_item->slug] = array();
 					}
 				}
 			}
@@ -321,10 +332,13 @@ $("li").toggle(
 		}
 		else if (count($objects_ids_array) == 1)		
 		{
-			$array_unique_ids = $objects_ids_array[0];
+			foreach($objects_ids_array as $idx_ids => $object_ids_item)
+			{
+				$array_unique_ids = $object_ids_item;
+				break;
+			}
 		}
-		//echo "array_unique_ids<pre>"; print_r($array_unique_ids); echo "</pre>";
-		
+				
 		$object_ids_str = "";
 		if ($array_unique_ids)
 		{
@@ -348,7 +362,6 @@ $("li").toggle(
 			}
 
 			$result = array_intersect($array_unique_ids, $attachment_posts_ids);
-			//echo "result<pre>"; print_r($result); echo "</pre>";
 			if ($result)
 			{				
 				$get_post_args['post_type'] 	= "attachment";
@@ -357,7 +370,6 @@ $("li").toggle(
 				$get_post_args['orderby']		= $r['orderby'];
 				$get_post_args['order']			= $r['order'];
 				$get_post_args['include']		= implode(',', $result);
-				//echo "get_post_args<pre>"; print_r($get_post_args); echo "</pre>";
 
 				$attachment_posts = get_posts($get_post_args);
 				

@@ -8,6 +8,13 @@ function mediatags_shortcode_handler($atts, $content=null, $tableid=null)
 	if ((!isset($atts['return_type'])) || ($atts['return_type'] != "li"))
 		$atts['return_type'] = "li";
 
+	if (!isset($atts['before_list']))
+		$atts['before_list'] = "<ul>";
+
+	if (!isset($atts['after_list']))
+		$atts['after_list'] = "<ul>";
+
+
 	if ((!isset($atts['display_item_callback'])) || (strlen($atts['display_item_callback']) == 0))
 		$atts['display_item_callback'] = 'default_item_callback';
 

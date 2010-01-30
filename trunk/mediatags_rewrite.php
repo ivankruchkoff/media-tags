@@ -34,6 +34,7 @@ function mediatags_parseQuery() {
 	
 	if (is_MEDIA_TAGS_URL()) {
 		global $wp_query;
+			
 		$wp_query->is_single = false;
 		$wp_query->is_page = false;
 		$wp_query->is_archive = false;
@@ -42,6 +43,8 @@ function mediatags_parseQuery() {
 		$wp_query->is_404 = false;
 
 		$wp_query->is_mediatags = true;
+
+		//echo "wp_query<pre>"; print_r($wp_query); echo "</pre>";
 
 		add_action('template_redirect', 'mediatags_includeTemplate');
 	}	
@@ -68,20 +71,54 @@ function mediatags_includeTemplate() {
 		$template = '';
 					
 		$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+		//echo "mediatag_var=[".$mediatag_var."]<br />";
+
+		$mediatag_feed_var = get_query_var('feed');
+		//echo "mediatag_feed_var=[".$mediatag_feed_var."]<br />";
+
 		if ($mediatag_var)
 		{	
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 			if ($mediatag_term)
 			{					
-				$fname_parts = pathinfo(MEDIA_TAGS_TEMPLATE);
-				if (strlen($fname_parts['filename']))
+				if (($mediatag_feed_var == "rss")
+ 				 || ($mediatag_feed_var == "rss2")
+				 || ($mediatag_feed_var == "feed"))
 				{
-					$template_filename = TEMPLATEPATH. "/" . 
+					//load_template( ABSPATH . WPINC . '/feed-rss2.php' );					
+					//load_template( dirname(__FILE__) . "/mediatags_rss2.php");
+
+					$fname_parts = pathinfo(MEDIA_TAGS_RSS_TEMPLATE);
+					if (strlen($fname_parts['filename']))
+					{
+						$template_filename = TEMPLATEPATH. "/" . 
 							$fname_parts['filename'] . "-". $mediatag_term['term_id'] . 
 							".". $fname_parts['extension'];
 					
-					if ( !file_exists($template_filename) )
-						$template_filename = "";						
+						if ( !file_exists($template_filename) )
+						{
+							$template_filename = "";
+							$plugindir_node = dirname(__FILE__);	
+							$template_filename = $plugindir_node ."/".MEDIA_TAGS_RSS_TEMPLATE;
+						}
+					}
+					//echo "template_filename[".$template_filename."]<br />";
+					//include($template_filename);
+					load_template($template_filename);
+					exit;
+				}
+				else
+				{
+					$fname_parts = pathinfo(MEDIA_TAGS_TEMPLATE);
+					if (strlen($fname_parts['filename']))
+					{
+						$template_filename = TEMPLATEPATH. "/" . 
+							$fname_parts['filename'] . "-". $mediatag_term['term_id'] . 
+							".". $fname_parts['extension'];
+					
+						if ( !file_exists($template_filename) )
+							$template_filename = "";						
+					}
 				}
 			}
 		}

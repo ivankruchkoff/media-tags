@@ -3,8 +3,8 @@ Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
-Tested up to: 2.8.4
-Stable tag: 2.2.5
+Tested up to: 2.9.1
+Stable tag: 2.2.6
 
 == Description ==
 
@@ -131,8 +131,17 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+= 2.2.6 = 
+2010-01-30: changes Include:
+* Some code tweaks to streamline the logic.
 
-= 2.2.5 -
+* Added RSS output option to Media-Tag Settings page. When enabled will allow direct RSS for an item archive. for example given a Media-Tag archive like http://www.somesite.com/media-tags/my-tag where my-tag is a Media-Tag item you can access the RSS by accessing http://www.somesite.com/media-tags/my-tag/feed.
+
+* Export/Import logic for Media Tags. I've utilized form action in WordPress that allow complete export and import of Media-Tags elements when using the WordPress export Tool. There is currently not a stand alone method to just export Media-Tags.
+
+* Coming soon a few Media-Tags widgets. 
+
+= 2.2.5 =
 2009-08-30: Changes Include:
 * Bug fixes to Admin screens. Namely one but for the Permalink slug field. 
 
