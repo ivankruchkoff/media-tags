@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/
 Description: Provides ability to tag media via Media Management screens
 Author: Paul Menard
-Version: 2.2.6
+Version: 2.2.7
 Author URI: http://www.codehooligans.com
 */
 
@@ -80,7 +80,7 @@ class MediaTags {
 		mediatags_init_rewrite();
 			
 		// Checks ths plugin version again the legacy data
-		if ((isset($_REQUEST['activate'])) || ($_REQUEST['activate'] == true))
+		if ((isset($_REQUEST['activate'])) && ($_REQUEST['activate'] == true))
 		{
 			$this->mediatags_activate_plugin();
 		}
@@ -218,7 +218,8 @@ $("li").toggle(
 			'order' => 'DESC',
 			'offset' => '0',
 			'return_type' => '',
-			'tags_compare' => 'OR'			
+			'tags_compare' => 'OR',
+			'size' => 'medium'
 		);
 		$r = wp_parse_args( $args, $defaults );
 		
@@ -374,7 +375,7 @@ $("li").toggle(
 				$attachment_posts = get_posts($get_post_args);
 				
 				// Now that we have the list of all matching posts we need to filter by the media type is provided
-				if (count($r['media_types_array']))
+				if ((isset($r['media_types_array'])) && (count($r['media_types_array'])))
 				{
 					foreach($attachment_posts as $attachment_idx => $attachment_post)
 					{
@@ -396,7 +397,7 @@ $("li").toggle(
 					{
 						if ((strlen($r['display_item_callback']))
 						 && (function_exists($r['display_item_callback'])))
-							$attachment_posts_list .= call_user_func($r['display_item_callback'], $attachment_post);
+							$attachment_posts_list .= call_user_func($r['display_item_callback'], $attachment_post, $r['size']);
 					}
 					return $attachment_posts_list;
 				}
@@ -407,5 +408,9 @@ $("li").toggle(
 		}
 	}
 }
-$mediatags = new MediaTags();
+add_action('init','init_media_tags');
+function init_media_tags() {
+	global $mediatags;
+	$mediatags = new MediaTags();
+}
 ?>

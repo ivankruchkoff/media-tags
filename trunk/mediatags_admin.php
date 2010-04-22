@@ -22,6 +22,14 @@ function mediatags_show_fields_to_edit($form_fields, $post)
        		size='50' value='' />
 		$post_media_tags_fields "
 	);
+	$form_fields['media-meta-menu-order'] = array(
+	   	'label' => __('Menu order:'),
+		'input' => 'html',
+		'html' => "<input type='text' name='attachments[$post->ID][menu_order]' 
+			id='attachments[$post->ID][menu_order]'
+	   		size='10' value=$post->menu_order />"
+	);
+	
 	//echo "form_fields<pre>"; print_r($form_fields); echo "</pre>";
     return $form_fields;
 }

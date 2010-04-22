@@ -3,8 +3,8 @@ Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
-Tested up to: 2.9.1
-Stable tag: 2.2.6
+Tested up to: 2.9.2
+Stable tag: 2.2.7
 
 == Description ==
 
@@ -131,8 +131,22 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+= 2.2.7 =
+2010-04-22: Changes include:
+* Some code tweaks to streamline the logic.
+
+* Bug fix: Better Init method. Thanks to Mike Schinkel for pointing out the error of my ways on this. Also for suggesting using the WP_DEBUG to make sure I have all the holes on the dike plugged. 
+
+* Bug fix: Erronious compare argument on the activate logic media_tags.php in the init function. Thanks to Tom for that note http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/#comment-48664
+
+* Bug fix: Fixed some hard-coded table name prefixes. To all I apologize for this issue. For some reason early code I lifted from another plugin I didn't scan. In the mediatags_rewrite.php where the SQL WHERE is manipulated for matching the rewrite URL the queries had hard-coded prefixed as in 'wp_posts.', etc. This prevents the Media Tags plugin from working on non-standard database setup and also for WPMU. This should now be working. 
+
+* Some initial testing with WordPress 3.0 Beta 1. Things seem to work fine with this plugin. But open for further testing. 
+
+
+
 = 2.2.6 = 
-2010-01-30: changes Include:
+2010-01-30: Changes include:
 * Some code tweaks to streamline the logic.
 
 * Added RSS output option to Media-Tag Settings page. When enabled will allow direct RSS for an item archive. for example given a Media-Tag archive like http://www.somesite.com/media-tags/my-tag where my-tag is a Media-Tag item you can access the RSS by accessing http://www.somesite.com/media-tags/my-tag/feed.
@@ -142,7 +156,7 @@ By default the plugin will use the default WordPress templates in your theme dir
 * Coming soon a few Media-Tags widgets. 
 
 = 2.2.5 =
-2009-08-30: Changes Include:
+2009-08-30: Changes include:
 * Bug fixes to Admin screens. Namely one but for the Permalink slug field. 
 
 * Added a 'View' option on the Media Tags Management screen on the quite menu options. This will let you preview the media-tag item in your theme. 

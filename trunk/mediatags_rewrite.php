@@ -60,7 +60,7 @@ function is_MEDIA_TAGS_URL() {
 		&& ($wp_version >= 2.0) ) ? get_query_var(MEDIA_TAGS_QUERYVAR) : $GLOBALS[MEDIA_TAGS_QUERYVAR];
 
 	//$series = get_query_var(SERIES_QUERYVAR);
-	if ( (!is_null($MEDIA_TAGS_URL) && ($MEDIA_TAGS_URL != '')) || $wp_query->is_mediatags == true)
+	if ( (!is_null($MEDIA_TAGS_URL) && ($MEDIA_TAGS_URL != '')) || ((isset($wp_query->is_mediatags)) && ($wp_query->is_mediatags == true)) )
 		return true;
 	else
 		return false;
@@ -142,6 +142,8 @@ function mediatags_postsWhere($where)
 { 
 	global $wpdb;
 	
+	$whichmediatags	= "";
+	
 	//echo "_REQUEST[mediatag_id]=[".$_REQUEST['mediatag_id']."]<br />";
 	//echo "where - initial =[".$where."]<br />";
 	
@@ -153,11 +155,11 @@ function mediatags_postsWhere($where)
 		//echo "sermedia_tags_chk<pre>"; print_r($sermedia_tags_chk); echo "</pre>";
 
 		// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
-		$where = str_replace("AND wp_posts.post_type = 'post'", "AND wp_posts.post_type = 'attachment'", $where);
-		$where = str_replace("(wp_posts.post_status = 'publish' OR wp_posts.post_status = 'private')", 
-								"(wp_posts.post_status = 'inherit')", $where);
-		$where = str_replace("(wp_posts.post_status = 'publish')", 
-								"(wp_posts.post_status = 'inherit')", $where);
+		$where = str_replace("AND $wpdb->posts.post_type = 'post'", "AND $wpdb->posts.post_type = 'attachment'", $where);
+		$where = str_replace("($wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private')", 
+								"($wpdb->posts.post_status = 'inherit')", $where);
+		$where = str_replace("($wpdb->posts.post_status = 'publish')", 
+								"($wpdb->posts.post_status = 'inherit')", $where);
 
 		//$token = "'" . MEDIA_TAGS_QUERYVAR . "'";
 		//echo "token=[".$token."]<br />";
