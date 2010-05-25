@@ -144,58 +144,40 @@ function mediatags_postsWhere($where)
 	
 	$whichmediatags	= "";
 	
-	//echo "_REQUEST[mediatag_id]=[".$_REQUEST['mediatag_id']."]<br />";
-	//echo "where - initial =[".$where."]<br />";
-	
-	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);	
 	if ($mediatags_var)
 	{
 		//is the term (media-tag value valid)?
-		$sermedia_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-		//echo "sermedia_tags_chk<pre>"; print_r($sermedia_tags_chk); echo "</pre>";
-
-		// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
-		$where = str_replace("AND $wpdb->posts.post_type = 'post'", "AND $wpdb->posts.post_type = 'attachment'", $where);
-		$where = str_replace("($wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private')", 
+		$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		if ($media_tags_chk)
+		{
+			// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
+			$where = str_replace("AND $wpdb->posts.post_type = 'post'", "AND $wpdb->posts.post_type = 'attachment'", $where);
+			$where = str_replace("($wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private')", 
 								"($wpdb->posts.post_status = 'inherit')", $where);
-		$where = str_replace("($wpdb->posts.post_status = 'publish')", 
+			$where = str_replace("($wpdb->posts.post_status = 'publish')", 
 								"($wpdb->posts.post_status = 'inherit')", $where);
 
-		//$token = "'" . MEDIA_TAGS_QUERYVAR . "'";
-		//echo "token=[".$token."]<br />";
-
-		
-		if ( !empty($sermedia_tags_chk) ) 
-			$mediatags_var = $sermedia_tags_chk['term_id'];
-		$whichmediatags = '';
-
-		if ( !empty($mediatags_var)) {
 			$whichmediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
-			$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = $mediatags_var ";
+			$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = ".$media_tags_chk['term_id'];
 		}
-
 	}
 	else if (isset($_REQUEST['mediatag_id']))
 	{
 		$whichmediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
 		$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = '".$_REQUEST['mediatag_id']."' ";		
 	}
-
 	$where .= $whichmediatags;
-	//echo "after where=[".$where."]<br />";
-	
 	return $where;
 }
-
 
 function mediatags_postsJoin($join) 
 {
 	global $wpdb;
 
-	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
-	$cat_var = get_query_var('cat');
-
-	if (( !empty($mediatag_var) && empty( $cat_var )) 
+	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+	if (($media_tags_chk) 
 	 || (isset($_REQUEST['mediatag_id'])))
 	{
 		$join = " INNER JOIN $wpdb->term_relationships 

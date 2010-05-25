@@ -4,9 +4,11 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
 Tested up to: 2.9.2
-Stable tag: 2.2.7
+Stable tag: 2.2.8
 
 == Description ==
+
+[Plugin Homepage](http://www.codehooligans.com/projects/wordpress/media-tags/ "Media-Tags Plugin for WordPress")
 
 Adds an input to the media upload and management screens. This input field can be used to "tag" a media file. Works with images, documents or anything.
 
@@ -131,6 +133,11 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+= 2.2.8 =
+2010-04-22: Changes include:
+* Some code tweaks to streamline the logic.
+* Corrected an initializing issue with the plugin that effected the init process which in turn effected the rewrite setup and use of the mediatag.php template file. 
+
 = 2.2.7 =
 2010-04-22: Changes include:
 * Some code tweaks to streamline the logic.

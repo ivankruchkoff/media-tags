@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Media Tags
-Plugin URI: http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/
-Description: Provides ability to tag media via Media Management screens
+Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
+Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 2.2.7
+Version: 2.2.8
 Author URI: http://www.codehooligans.com
 */
 
@@ -408,9 +408,14 @@ $("li").toggle(
 		}
 	}
 }
+$mediatags = new MediaTags();
+
+// Can't to the below. The init here effect the init function within the mediatags class. 
+/*
 add_action('init','init_media_tags');
 function init_media_tags() {
 	global $mediatags;
 	$mediatags = new MediaTags();
 }
+*/
 ?>

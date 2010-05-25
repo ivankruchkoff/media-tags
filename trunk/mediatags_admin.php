@@ -55,7 +55,10 @@ function mediatags_get_fields($post_id)
 	if ($master_media_tags_array)
 	{
 		//echo "master_media_tags_array<pre>"; print_r($master_media_tags_array); echo "</pre>";
-		$master_media_tag_fields_tmp = array();
+		$master_media_tag_fields_tmp = array();		
+		$master_media_tag_fields_tmp['used_item'] 	= "";
+		$master_media_tag_fields_tmp['used_all']	= "";
+		$master_media_tag_fields_tmp['unused_all']	= "";
 		
 		foreach($master_media_tags_array  as $idx => $tag_item)
 		{
@@ -84,6 +87,7 @@ function mediatags_get_fields($post_id)
 				}
 			}
 		}
+		$master_media_tag_fields = "";
 		if (strlen($master_media_tag_fields_tmp['used_item']))
 			$master_media_tag_fields .= '<a id="media-tags-show-hide-used" href="#">Media Tags for this attachment</a>
 				<div id="media-tags-list-used"><ul class="media-tags-list">'. 
