@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 2.2.8
+Version: 2.2.9
 Author URI: http://www.codehooligans.com
 */
 
@@ -64,8 +64,6 @@ class MediaTags {
 			add_action('admin_menu', 'mediatags_admin_panels');
 		}
 
-		$this->register_taxonomy();
-
 		if ((isset($_REQUEST['page']))
 		 && ($_REQUEST['page'] == ADMIN_MENU_KEY))
 		{
@@ -77,6 +75,8 @@ class MediaTags {
 	}
 
 	function init() {
+		
+		$this->register_taxonomy();
 		mediatags_init_rewrite();
 			
 		// Checks ths plugin version again the legacy data

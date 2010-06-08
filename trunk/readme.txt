@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
 Tested up to: 2.9.2
-Stable tag: 2.2.8
+Stable tag: 2.2.9
 
 == Description ==
 
@@ -133,6 +133,10 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+= 2.2.9 =
+2010-06-08: Changes include:
+* Corrected an taxonomy registration during the initializing of the plugin. Testing with WP 3.0 RC1. 
+
 = 2.2.8 =
 2010-04-22: Changes include:
 * Some code tweaks to streamline the logic.
@@ -149,8 +153,6 @@ By default the plugin will use the default WordPress templates in your theme dir
 * Bug fix: Fixed some hard-coded table name prefixes. To all I apologize for this issue. For some reason early code I lifted from another plugin I didn't scan. In the mediatags_rewrite.php where the SQL WHERE is manipulated for matching the rewrite URL the queries had hard-coded prefixed as in 'wp_posts.', etc. This prevents the Media Tags plugin from working on non-standard database setup and also for WPMU. This should now be working. 
 
 * Some initial testing with WordPress 3.0 Beta 1. Things seem to work fine with this plugin. But open for further testing. 
-
-
 
 = 2.2.6 = 
 2010-01-30: Changes include:
