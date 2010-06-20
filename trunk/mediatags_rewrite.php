@@ -8,7 +8,10 @@ function mediatags_init_rewrite()
 	if (isset($wp_rewrite) && $wp_rewrite->using_permalinks()) {
 		add_filter('rewrite_rules_array', 'mediatags_createRewriteRules');
 	}
-	$wp_rewrite->flush_rules();
+	if ((isset($_REQUEST['activate'])) && ($_REQUEST['activate'] == true))
+	{	
+		$wp_rewrite->flush_rules();
+	}
 }
 
 function mediatags_createRewriteRules($rules) {

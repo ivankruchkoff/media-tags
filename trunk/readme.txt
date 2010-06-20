@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
 Tested up to: 2.9.2
-Stable tag: 2.2.9
+Stable tag: 2.2.9.1
 
 == Description ==
 
@@ -133,6 +133,13 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+
+= 2.2.9.1 = 
+2010-06-20
+* Change to the rewrite init processing. Found out I was doing it wrong. Thanks for clope on the WordPress.org forums via this thread. http://wordpress.org/support/topic/360613
+
+Hopefully this makes Media-Tags place nicer with larger systems. 
+
 = 2.2.9 =
 2010-06-08: Changes include:
 * Corrected an taxonomy registration during the initializing of the plugin. Testing with WP 3.0 RC1. 
