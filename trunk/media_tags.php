@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 2.2.9
+Version: 2.2.9.1
 Author URI: http://www.codehooligans.com
 */
 
