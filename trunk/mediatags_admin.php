@@ -1,8 +1,8 @@
 <?php
 function mediatags_admin_panels()
 {
-	add_media_page( "Media Tags", "Media Tags", 8, ADMIN_MENU_KEY, 'mediatags_mgmt_panel');
-	add_options_page('Media Tags', 'Media Tags', 8, ADMIN_MENU_KEY, 'mediatags_settings_panel');
+	add_media_page( "Media Tags", "Media Tags", 'manage_options', ADMIN_MENU_KEY, 'mediatags_mgmt_panel');
+	add_options_page('Media Tags', 'Media Tags', 'manage_options', ADMIN_MENU_KEY, 'mediatags_settings_panel');
 }
 
 function mediatags_show_fields_to_edit($form_fields, $post) 
@@ -22,6 +22,8 @@ function mediatags_show_fields_to_edit($form_fields, $post)
        		size='50' value='' />
 		$post_media_tags_fields "
 	);
+
+/*
 	$form_fields['media-meta-menu-order'] = array(
 	   	'label' => __('Menu order:'),
 		'input' => 'html',
@@ -29,7 +31,7 @@ function mediatags_show_fields_to_edit($form_fields, $post)
 			id='attachments[$post->ID][menu_order]'
 	   		size='10' value=$post->menu_order />"
 	);
-	
+*/	
 	//echo "form_fields<pre>"; print_r($form_fields); echo "</pre>";
     return $form_fields;
 }
@@ -37,6 +39,8 @@ function mediatags_show_fields_to_edit($form_fields, $post)
 
 function mediatags_get_fields($post_id)
 {
+	$master_media_tag_fields = "";
+	
 	$media_tags_tmp 	= (array)wp_get_object_terms($post_id, MEDIA_TAGS_TAXONOMY);
 	//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";
 	
@@ -87,7 +91,6 @@ function mediatags_get_fields($post_id)
 				}
 			}
 		}
-		$master_media_tag_fields = "";
 		if (strlen($master_media_tag_fields_tmp['used_item']))
 			$master_media_tag_fields .= '<a id="media-tags-show-hide-used" href="#">Media Tags for this attachment</a>
 				<div id="media-tags-list-used"><ul class="media-tags-list">'. 
@@ -107,7 +110,7 @@ function mediatags_get_fields($post_id)
 }
 
 function meditags_process_attachment_fields_to_save($post, $attachment) 
-{
+{	
 	$media_tags_array = array();
 
 	if (isset($attachment['media_tags_checkbox']))
@@ -127,7 +130,7 @@ function meditags_process_attachment_fields_to_save($post, $attachment)
 			{
 				$tag_slug = sanitize_title_with_dashes($tag_val);
 				
-				if ( ! ($id = is_term( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
+				if ( ! ($id = term_exists( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
 					wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
 				
 				$media_tags_array[] = $tag_slug;
@@ -421,14 +424,14 @@ function _media_tag_row( $tag, $class = '' ) {
 			
 			case 'name':
 				$out .= '<td ' . $attributes . '><strong><a class="row-title" href="' . $edit_link . '" title="' . 
-					attribute_escape(sprintf(__('Edit "%s"'), $name)) . '">' . $name . '</a></strong><br />';
+					esc_attr(sprintf(__('Edit "%s"'), $name)) . '">' . $name . '</a></strong><br />';
 				$actions = array();
 				$actions['edit'] = '<a href="' . $edit_link . '">' . __('Edit') . '</a>';
 				$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
 				$actions['delete'] = "<a class='submitdelete' href='" . wp_nonce_url(get_option('siteurl')
 					."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
 					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . 
-					js_escape(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) 
+					esc_js(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) 
 					{ return true;}return false;\">" . __('Delete') . "</a>";
 				$actions['view'] = '<a href="' . $view_link . '">' . __('View') . '</a>';
 
@@ -507,7 +510,7 @@ function inline_edit_mediatags_row($type) {
 	<p class="inline-edit-save submit">
 		<a accesskey="c" href="#inline-edit-mediatag" title="<?php _e('Cancel'); ?>" class="cancel button-secondary alignleft"><?php _e('Cancel'); ?></a>
 		<?php $update_text = ( $is_tag ) ? __( 'Update Tag' ) : __( 'Update Category' ); ?>
-		<a accesskey="s" href="#inline-edit-mediatag" title="<?php echo attribute_escape( $update_text ); ?>" class="save button-primary alignright"><?php echo $update_text; ?></a>
+		<a accesskey="s" href="#inline-edit-mediatag" title="<?php echo esc_attr( $update_text ); ?>" class="save button-primary alignright"><?php echo $update_text; ?></a>
 		<img class="waiting" style="display:none;" src="images/loading.gif" alt="" />
 		<span class="error" style="display:none;"></span>
 		<?php wp_nonce_field( 'taxinlineeditnonce', '_inline_edit', false ); ?>
@@ -521,6 +524,7 @@ function inline_edit_mediatags_row($type) {
 
 function mediatags_process_actions()
 {
+	
 	if (!isset($_REQUEST['action']))
 		return;
 
@@ -562,7 +566,7 @@ function mediatags_process_actions()
 }
 
 function mediatags_process_add()
-{	
+{		
 	if (!isset($_REQUEST['name']))
 		return;
 
@@ -573,7 +577,6 @@ function mediatags_process_add()
 	else
 		$media_tag_slug = trim($_REQUEST['name']);
 		
-	//$media_tag_slug = sanitize_title($media_tag_slug);
 	$media_tag_slug = sanitize_title_with_dashes($media_tag_slug);
 	
 	if ( '' === $media_tag_slug )
@@ -582,7 +585,7 @@ function mediatags_process_add()
 	if (!function_exists('wp_redirect'))
 		require_once(ABSPATH . 'wp-includes/pluggable.php');
 
-	if ( !is_term( $media_tag_name, MEDIA_TAGS_TAXONOMY ) ) 
+	if ( !term_exists( $media_tag_name, MEDIA_TAGS_TAXONOMY ) ) 
 	{
 		$ret = wp_insert_term( $media_tag_name, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug));
 		if ( $ret && !is_wp_error( $ret ) ) {
@@ -686,12 +689,12 @@ function mediatags_process_edit($mediatag_ID)
 		<table class="form-table">
 			<tr class="form-field form-required">
 				<th scope="row" valign="top"><label for="name"><?php _e('Tag name') ?></label></th>
-				<td><input name="name" id="name" type="text" value="<?php if ( isset( $tag->name ) ) echo attribute_escape($tag->name); ?>" size="40" aria-required="true" />
+				<td><input name="name" id="name" type="text" value="<?php if ( isset( $tag->name ) ) echo esc_attr($tag->name); ?>" size="40" aria-required="true" />
 	            <p><?php _e('The name is how the tag appears on your site.'); ?></p></td>
 			</tr>
 			<tr class="form-field">
 				<th scope="row" valign="top"><label for="slug"><?php _e('Tag slug') ?></label></th>
-				<td><input name="slug" id="slug" type="text" value="<?php if ( isset( $tag->slug ) ) echo attribute_escape(apply_filters('editable_slug', $tag->slug)); ?>" size="40" />
+				<td><input name="slug" id="slug" type="text" value="<?php if ( isset( $tag->slug ) ) echo esc_attr(apply_filters('editable_slug', $tag->slug)); ?>" size="40" />
 	            <p><?php _e('The &#8220;slug&#8221; is the URL-friendly version of the name. It is usually all lowercase and contains only letters, numbers, and hyphens.'); ?></p></td>
 			</tr>
 		</table>
@@ -741,6 +744,7 @@ function media_upload_mediatags()
 		// Return it to TinyMCE
 		return media_send_to_editor($html);
 	}
+	$errors = null;
 	return wp_iframe( 'media_upload_mediatags_form', $errors );
 }
 
@@ -755,40 +759,15 @@ function media_upload_mediatags_form($errors)
 	$total 		= 1;
 	$picarray 	= false;
 	
-	$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?type={$_POST['type']}&tab=library&post_id=$post_id";
+	if (isset($_POST['type']))
+		$type = "type=".$_POST['type']."&";
+	
+	$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?".$type."tab=library&post_id=$post_id";
 	?>
-	<?php /* ?>
-	<form id="filter" action="<?php echo $form_action_url; ?>" method="get">
-	<input type="hidden" name="type" value="<?php echo esc_attr( $type ); ?>" />
-	<input type="hidden" name="tab" value="library<?php //echo esc_attr( $tab ); ?>" />
-	<input type="hidden" name="post_id" value="<?php echo (int) $post_id; ?>" />
-	<input type="hidden" name="post_mime_type" 
-		value="<?php echo isset( $_GET['post_mime_type'] ) ? esc_attr( $_GET['post_mime_type'] ) : ''; ?>" />
-
-	<p id="media-search" class="search-box">
-		<label class="screen-reader-text" for="media-search-input"><?php _e('Search Media by Media Tags');?>:</label>
-		<input type="text" id="media-search-input" name="s" value="<?php the_search_query(); ?>" />
-		<input type="submit" value="<?php esc_attr_e( 'Search Media' ); ?>" class="button" />
-	</p>
-	</form>
-	<?php */ ?>
 	<div style="clear:both"></div>
 	<?php
 	$mediatag_items = get_mediatags();
 	
-/*	
-	$page_links = paginate_links( array(
-		'base' => add_query_arg( 'paged', '%#%' ),
-		'format' => '',
-		'prev_text' => __('&laquo;'),
-		'next_text' => __('&raquo;'),
-		'total' => ceil(count($mediatag_items) / 10),
-		'current' => $_GET['paged']
-	));
-
-	if ( $page_links )
-		echo "<div class='tablenav-pages'>$page_links</div>";
-*/
 	?>	
 	
 	<form action="">
@@ -802,8 +781,6 @@ function media_upload_mediatags_form($errors)
 				<div id="mediatag-item-<?php echo $mediatag_item->term_id; ?>" class="media-item">
 					<div class="filename" style="display: block; float: left; width: 70%"><?php 
 						echo $mediatag_item->name; ?></div>
-						
-						
 						
 					<div class="mediatag-item-count" 
 						style="display: block; float: right; width: 10%; line-height:36px;overflow:hidden;padding:0 10px;">

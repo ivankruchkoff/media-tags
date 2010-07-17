@@ -18,7 +18,7 @@ function mediatags_plugin_version_check()
 		{
 			foreach($legacy_master_media_tags as $legacy_slug => $legacy_name)
 			{
-				if ( ! ($id = is_term( $legacy_slug, MEDIA_TAGS_TAXONOMY ) ) )
+				if ( ! ($id = term_exists( $legacy_slug, MEDIA_TAGS_TAXONOMY ) ) )
 					wp_insert_term($legacy_name, MEDIA_TAGS_TAXONOMY, array('slug' => $legacy_slug));
 			}
 			//$media_tags_tmp = (array) get_terms(MEDIA_TAGS_TAXONOMY, 'hide_empty=0');
@@ -33,15 +33,18 @@ function mediatags_plugin_version_check()
 			foreach($post_attachments as $attachment)
 			{
 				$legacy_media_meta = wp_get_attachment_metadata($attachment->ID);
-				if (isset($legacy_media_meta['image_meta']['media_tags']))
-					$legacy_post_media_tags_str = $legacy_media_meta['image_meta']['media_tags'];
-				else
-					$legacy_post_media_tags_str = "";
-				
-				$legacy_post_media_tags_array = legacy_get_post_media_tags($attachment->ID, $legacy_post_media_tags_str);
-				if ($legacy_post_media_tags_array)
+				if ($legacy_media_meta)
 				{
-					wp_set_object_terms($attachment->ID, $legacy_post_media_tags_array, MEDIA_TAGS_TAXONOMY);
+					if (isset($legacy_media_meta['image_meta']['media_tags']))
+						$legacy_post_media_tags_str = $legacy_media_meta['image_meta']['media_tags'];
+					else
+						$legacy_post_media_tags_str = "";
+				
+					$legacy_post_media_tags_array = legacy_get_post_media_tags($attachment->ID, $legacy_post_media_tags_str);
+					if ($legacy_post_media_tags_array)
+					{
+						wp_set_object_terms($attachment->ID, $legacy_post_media_tags_array, MEDIA_TAGS_TAXONOMY);
+					}
 				}
 			}				
 

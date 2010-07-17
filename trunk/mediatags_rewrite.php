@@ -81,7 +81,7 @@ function mediatags_includeTemplate() {
 
 		if ($mediatag_var)
 		{	
-			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 			if ($mediatag_term)
 			{					
 				if (($mediatag_feed_var == "rss")
@@ -151,7 +151,7 @@ function mediatags_postsWhere($where)
 	if ($mediatags_var)
 	{
 		//is the term (media-tag value valid)?
-		$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
 		if ($media_tags_chk)
 		{
 			// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
@@ -176,10 +176,16 @@ function mediatags_postsWhere($where)
 
 function mediatags_postsJoin($join) 
 {
-	global $wpdb;
+	global $wpdb, $wp_version;
 
 	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);
-	$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+
+	// In WP 3.0 'is_term' was renamed to 'term_exists'
+	if ($wp_version < "3.0")
+		$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+	else
+		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+
 	if (($media_tags_chk) 
 	 || (isset($_REQUEST['mediatag_id'])))
 	{

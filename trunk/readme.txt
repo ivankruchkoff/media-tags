@@ -3,8 +3,8 @@ Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: images, tags, media, shortcode, permalinks
 Requires at least: 2.7.1
-Tested up to: 2.9.2
-Stable tag: 2.2.9.1
+Tested up to: 3.0
+Stable tag: 2.2.9.2
 
 == Description ==
 
@@ -71,6 +71,10 @@ order: (Optional) Default 'DESC'. Controls the order of items. Other option is '
 
 offset: (Offset) Default is 0. Allows control over the subset of items returned.
 
+post_type: (Optional) Now that WP supports custom post types you can now filter based on your custom post type. Default is all posts types.
+
+nopaging: (Optional) Similar in functionality to the get_posts 'nopaging' argument. 
+
 return_type: (Optional) Defaults to Array. Other option is 'li'. In the case of shortcodes the return type is 'li' by default. When using the 'li' return type each element is given a class of 'media_tag_list' and an id of 'media-tag-item-xxxx' where 'xxx' is the attachment id.
 
 tags_compare: (Optional) Defaults to 'OR'. When requesting multiple media_tags elements allow a compare between the lists of items returned. When using the 'OR' option returned item will be in one or more of the requested media_tags values. Other value is 'AND'. When using 'AND' you are requesting only attachments which are in all requested media_tags. 
@@ -133,6 +137,12 @@ By default the plugin will use the default WordPress templates in your theme dir
 3. The Media Tags Management screen (new!)
 
 == Changelog == 
+
+= 2.2.9.2 = 
+2010-07-17
+* Changes includes more fixes for things broken under WP 3.0. Sorry for all the recent releases. Just trying to stay on top of the fixes. Also, patched some code for the export/import logic. Added two new shortcode and template function parameters. First is 'post_type'. This should allow filtering of Media-Tag media by post, page or your custom post types. Only a single post_type is supported. Second, is nopaging. This was reported by someone having trouble getting a sidebar widget to display all the Media-Tag items. 
+
+Still working in some bug and enhancement. Keep the bug reports coming. Thanks to all for making this a great plugin.
 
 = 2.2.9.1 = 
 2010-06-20

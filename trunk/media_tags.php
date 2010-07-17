@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 2.2.9.1
+Version: 2.2.9.2
 Author URI: http://www.codehooligans.com
 */
 
@@ -64,12 +64,6 @@ class MediaTags {
 			add_action('admin_menu', 'mediatags_admin_panels');
 		}
 
-		if ((isset($_REQUEST['page']))
-		 && ($_REQUEST['page'] == ADMIN_MENU_KEY))
-		{
-			mediatags_process_actions();
-		}		
-
 		// Support for the Google Sitemap XML plugin
 		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');				
 	}
@@ -84,6 +78,12 @@ class MediaTags {
 		{
 			$this->mediatags_activate_plugin();
 		}
+		
+		if ((isset($_REQUEST['page']))
+		 && ($_REQUEST['page'] == ADMIN_MENU_KEY))
+		{
+			mediatags_process_actions();
+		}				
 	}
 
 	function admin_init()
@@ -94,10 +94,27 @@ class MediaTags {
 	}
 		
 	function register_taxonomy() {
-		$args = array();					
-		$args['rewrite'] = array('slug' => MEDIA_TAGS_TAXONOMY);
-		$args['query_var'] = '?'.MEDIA_TAGS_TAXONOMY;		
-		register_taxonomy( MEDIA_TAGS_TAXONOMY, MEDIA_TAGS_TAXONOMY, $args );		
+		// Add new taxonomy, make it hierarchical (like categories)
+		  $labels = array(
+		    'name' => _x( 'Media-Tags', 'taxonomy general name' ),
+		    'singular_name' => _x( 'Media-Tag', 'taxonomy singular name' ),
+		    'search_items' =>  __( 'Search Media-Tags' ),
+		    'all_items' => __( 'All Media-Tags' ),
+		    'parent_item' => __( 'Parent Media-Tag' ),
+		    'parent_item_colon' => __( 'Parent Media-Tag:' ),
+		    'edit_item' => __( 'Edit Media-Tag' ), 
+		    'update_item' => __( 'Update Media-Tag' ),
+		    'add_new_item' => __( 'Add New Media-Tag' ),
+		    'new_item_name' => __( 'New Media-Tag Name' ),
+		  );
+
+		register_taxonomy(MEDIA_TAGS_TAXONOMY,MEDIA_TAGS_TAXONOMY,array(
+		    'hierarchical' => false,
+		    'labels' => $labels,
+		    'query_var' => true,
+		    'rewrite' => array( 'slug' => 'MEDIA_TAGS_TAXONOMY' )
+		  ));
+
 	}
 
 	function admin_head_proc()
@@ -212,14 +229,16 @@ $("li").toggle(
 			'display_item_callback' => 'default_item_callback',
 			'media_tags' => '', 
 			'media_types' => null,
-			'search_by' => 'slug',
 			'numberposts' => '-1',
-			'orderby' => 'menu_order',
+			'orderby' => 'menu_order',			
 			'order' => 'DESC',
 			'offset' => '0',
+			'post_type'	=> '',
 			'return_type' => '',
+			'search_by' => 'slug',
+			'size' => 'medium',
 			'tags_compare' => 'OR',
-			'size' => 'medium'
+			'nopaging'	=> ''
 		);
 		$r = wp_parse_args( $args, $defaults );
 		
@@ -348,10 +367,20 @@ $("li").toggle(
 
 		if ($object_ids_str)
 		{
-			$query_str = 'post_type=attachment&numberposts=-1';
-			if (isset($r['post_parent'])) $query_str = "post_parent=". $r['post_parent'] . "&". $query_str;
-			//echo "query_str=[".$query_str."]<br />";
-			$attachment_posts = get_posts($query_str);
+			$query_array = array(
+				'post_type'			=> 'attachment',
+				'numberposts'		=> 	-1
+			);
+			
+			if ((isset($r['post_parent'])) && (intval($r['post_parent']) > 0))
+				$query_array['post_parent'] = $r['post_parent'];
+			if ((isset($r['nopaging'])) && (strlen($r['nopaging']))) 
+				$query_array['nopaging'] = $r['nopaging'];
+			if ((isset($r['post_type'])) && (strlen($r['post_type']))) 
+				$query_array['post_type'] = $r['post_type'];
+
+			//echo "query_array<pre>"; print_r($query_array); echo "</pre>";
+			$attachment_posts = get_posts($query_array);
 
 			$attachment_posts_ids = array();
 			if ($attachment_posts)

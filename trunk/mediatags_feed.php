@@ -14,7 +14,7 @@ function add_mediatags_alternate_link() {
 		//echo "mediatag_var<pre>"; print_r($mediatag_var); echo "</pre>";
 		if ($mediatag_var)
 		{	
-			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 			if ($mediatag_term)
 			{
 				$get_terms_args['hide_empty'] = 0;

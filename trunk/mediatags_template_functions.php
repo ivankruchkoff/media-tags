@@ -16,7 +16,7 @@ function in_mediatag($mediatag_id = '')
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var)
 	{	
-		$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		if ($mediatag_id === $mediatag_term['term_id'])
 			return true;
 	}
@@ -129,7 +129,7 @@ function single_mediatag_title()
 {
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var) {	
-		$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		if (isset($mediatag_term['term_id'])) {
 			$media_tag = &get_term( $mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY );
 			echo $media_tag->name;
