@@ -854,6 +854,14 @@ function mediatags_settings_panel()
 				</select>
 			</p>
 			<hr />
+			<?php
+			$mediatag_rss_feed = get_option('mediatag_rss_feed'); 
+			if (!$mediatag_rss_feed)
+				$mediatag_rss_feed = "yes";
+			
+			?>
+			
+			
 			<h3>RSS Feed for Media Tags</h3>
 			<p>The Media Tags plugin now supports RSS feed when viewing an archive. For when viewing the URL http://www.mysite.com/media-tags/some-tag/ you can now access the RSS listing by adding '/feed' to the end of the URL as in http://www.mysite.com/media-tags/some-tag/feed/</p>
 			
