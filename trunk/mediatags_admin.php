@@ -1,116 +1,525 @@
 <?php
-function mediatags_admin_panels()
+function mediatags_admin_init()
 {
-	add_media_page( "Media Tags", "Media Tags", 'manage_options', ADMIN_MENU_KEY, 'mediatags_mgmt_panel');
-	add_options_page('Media Tags', 'Media Tags', 'manage_options', ADMIN_MENU_KEY, 'mediatags_settings_panel');
-}
+	global $mediatags, $wp_version;
 
-function mediatags_show_fields_to_edit($form_fields, $post) 
-{	
-	$post_media_tags_fields = mediatags_get_fields($post->ID);
-	if (strlen($post_media_tags_fields))
-		$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags 
-			separated with comma. Or select from the tag(s) below" . $post_media_tags_fields;
-	else
-		$post_media_tags_fields = "<br />Enter media tags in the space above. Enter multiple tags separated with comma.";
+	add_action( 'admin_head', 						'mediatags_admin_head_proc' );
+	add_action( 'admin_footer', 					'mediatags_admin_footer' );		
+	add_action( 'plugins_loaded', 					'mediatag_thirdparty_support' );
+			
+	add_action( 'wp_ajax_media_tags_bulk_action', 	'media_tags_bulk_action_callback' );
+	add_filter( 'attachment_fields_to_edit', 		'mediatags_show_fields_to_edit', 11, 2 );
+	add_filter( 'attachment_fields_to_save', 		'meditags_process_attachment_fields_to_save', 11, 2 );
+	add_action( 'delete_attachment', 				'mediatags_delete_attachment_proc' );
+
+	// Add dropdowns above Media > Library listing
+	add_action( 'restrict_manage_posts', 			'mediatags_filter_posts' );
+
+	add_action( 'wp_ajax_get_mediatags_ajax', 		'mediatags_get_mediatags_ajax' );
 	
-    $form_fields['media-meta'] = array(
-       	'label' => __('Media tags:'),
-   		'input' => 'html',
-   		'html' => "<input type='text' name='attachments[$post->ID][media_tags_input]' 
-			id='attachments[$post->ID][media_tags_input]'
-       		size='50' value='' />
-		$post_media_tags_fields "
-	);
+	// These hook into the Media Upload popup tabs
+	add_filter( 'media_upload_tabs', 				'mediatag_upload_tab' );
+	add_action( 'media_upload_mediatags', 			'media_upload_mediatags' );
 
-/*
-	$form_fields['media-meta-menu-order'] = array(
-	   	'label' => __('Menu order:'),
-		'input' => 'html',
-		'html' => "<input type='text' name='attachments[$post->ID][menu_order]' 
-			id='attachments[$post->ID][menu_order]'
-	   		size='10' value=$post->menu_order />"
-	);
-*/	
-	//echo "form_fields<pre>"; print_r($form_fields); echo "</pre>";
-    return $form_fields;
-}
+	// Handle Export/Import interaction
+	add_action('export_wp', 						'mediatags_wp_export_metadata');
+	add_action('import_post_meta', 					'mediatags_wp_import_metadata', 10, 3);
 
-
-function mediatags_get_fields($post_id)
-{
-	$master_media_tag_fields = "";
+	$mediatag_admin_bulk_library 					= get_option('mediatag_admin_bulk_library', 'yes'); 
+	$mediatag_admin_bulk_inline 					= get_option('mediatag_admin_bulk_inline', 'yes'); 
 	
-	$media_tags_tmp 	= (array)wp_get_object_terms($post_id, MEDIA_TAGS_TAXONOMY);
-	//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";
-	
-	$post_media_tags = array();
-	if ($media_tags_tmp)
+	if ($mediatag_admin_bulk_inline == "yes")
 	{
-		$post_media_tags = array(); 
-		foreach($media_tags_tmp as $p_media_tag)
-		{
-			$post_media_tags[$p_media_tag->slug] = $p_media_tag;
-		}
-		//echo "post_media_tags<pre>"; print_r($post_media_tags); echo "</pre>";
+		add_filter('media_upload_gallery', 'media_upload_gallery_tab', 10, 1);	// The Gallery Tab
+		add_filter('media_upload_library', 'media_upload_gallery_tab', 10, 1);	// The Media Library Tab
 	}
 
-	$master_media_tags_array = mediatags_load_master();	
-	if ($master_media_tags_array)
+	// since there is no way to tell via the WP screen object, etc which page we are on we need to do something ugly, parse 
+	// the REQUEST_URI. Freaking ugly IMHO. Need a better way to do this.
+	$_REQUEST_URI = explode('?', $_SERVER['REQUEST_URI']);
+	
+	// If we are viewing the Media > Library page. This needs hooks to display the jQuery-UI popup for the Bulk admin
+	// if enabled via the Media-Tags > Settings page.
+	if (substr_compare($_REQUEST_URI[0], '/wp-admin/upload.php', strlen('/wp-admin/upload.php') * -1, 
+		strlen('/wp-admin/upload.php'), TRUE) == 0)
 	{
-		//echo "master_media_tags_array<pre>"; print_r($master_media_tags_array); echo "</pre>";
-		$master_media_tag_fields_tmp = array();		
-		$master_media_tag_fields_tmp['used_item'] 	= "";
-		$master_media_tag_fields_tmp['used_all']	= "";
-		$master_media_tag_fields_tmp['unused_all']	= "";
-		
-		foreach($master_media_tags_array  as $idx => $tag_item)
+		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css', 
+			false, $mediatags->plugin_version);
+
+		if (($mediatag_admin_bulk_library == "yes") && (current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP )))
 		{
-			if (array_key_exists($idx, $post_media_tags) !== false)
+			if (MEDIA_TAGS_POPUP == 'JQUERY-UI')
 			{
-				$selected_tag = ' checked="checked" ';
-				$master_media_tag_fields_tmp['used_item'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
-					name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
-					<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+				wp_enqueue_script('jquery'); 
+				wp_enqueue_script('jquery-ui-core'); 
+				wp_enqueue_script('jquery-ui-dialog');
+				wp_enqueue_style( 'mediatags-jquery-ui', 
+					$mediatags->plugindir_url .'/js/jquery-ui/css/flick/jquery-ui-1.7.3.custom.css',
+					array('mediatags-stylesheet'), $mediatags->plugin_version );
+			}
+			wp_enqueue_script('mediatags-bulk-common', $mediatags->plugindir_url .'/js/mediatags_bulk_common.js',
+				array('jquery', 'jquery-ui-core', 'jquery-ui-dialog'), $mediatags->plugin_version);
+			wp_enqueue_script('mediatags-bulk-library', $mediatags->plugindir_url .'/js/mediatags_bulk_library.js',
+				array('jquery', 'mediatags-bulk-common'), $mediatags->plugin_version);
+			wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
+				array('jquery'), $mediatags->plugin_version);
+
+			if (floatval($wp_version) >= "3.1")
+			{
+				add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
+			}							
+		}
+	}
+	// Else If we are viewing the Media popup via the Post/Page edito. if enabled via the Media-Tags > Settings page.
+	else if (substr_compare($_REQUEST_URI[0], '/wp-admin/media-upload.php', strlen('/wp-admin/media-upload.php') * -1, 
+		strlen('/wp-admin/media-upload.php'), TRUE) == 0)	
+	{		
+		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
+			false, $mediatags->plugin_version);
+
+		if (($mediatag_admin_bulk_inline == "yes") && (current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP ))
+		 && ((isset($_GET['tab'])) && (($_GET['tab'] == "gallery") || ($_GET['tab'] == "library"))) )
+		{
+			wp_enqueue_script('mediatags-bulk-common', $mediatags->plugindir_url .'/js/mediatags_bulk_common.js',
+				array('jquery'), $mediatags->plugin_version);
+			wp_enqueue_script('mediatags-bulk-inline', $mediatags->plugindir_url .'/js/mediatags_bulk_inline.js',
+				array('jquery', 'mediatags-bulk-common'), $mediatags->plugin_version);
+			wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
+				array('jquery'), $mediatags->plugin_version);			
+		}
+	}
+	else if (substr_compare($_REQUEST_URI[0], '/wp-admin/admin.php', strlen('/wp-admin/admin.php') * -1, 
+		strlen('/wp-admin/admin.php'), TRUE) == 0)
+	{
+		if ((isset($_GET['page'])) 
+			&& ( ($_GET['page'] == "mediatags_settings_panel") 
+				|| ($_GET['page'] == "mediatags_roles_panel")
+				|| ($_GET['page'] == "mediatags_help_panel")
+				|| ($_GET['page'] == "mediatags_thirdparty_panel") ))		  
+		{
+			wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
+				false, $mediatags->plugin_version);			
+			wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
+				array('jquery'), $mediatags->plugin_version);			
+		}
+	}
+	else if (substr_compare($_REQUEST_URI[0], 'wp-admin/media.php', strlen('wp-admin/media.php') * -1, 
+		strlen('wp-admin/media.php'), TRUE) == 0)
+	{
+		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
+			false, $mediatags->plugin_version);
+		wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
+			array('jquery'), $mediatags->plugin_version);			
+	}
+	if (substr_compare($_REQUEST_URI[0], '/wp-admin/async-upload.php', strlen('/wp-admin/async-upload.php') * -1, 
+		strlen('/wp-admin/async-upload.php'), TRUE) == 0)
+	{
+
+		//wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
+		//	false, $mediatags->plugin_version);
+		//wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
+		//	array('jquery'), $mediatags->plugin_version);			
+	}
+
+	if (function_exists('mediatags_settings_api_init'))
+		mediatags_settings_api_init();
+
+	//add_filter( 'manage_media_columns', 			'mediatags_library_column_header' );
+	add_filter( 'manage_upload_columns', 			'mediatags_library_column_header' );
+	add_filter( 'manage_edit-media-tags_columns', 	'mediatags_terms_column_header' );
+			
+	add_action( 'manage_media_custom_column', 		'mediatags_library_column_row', 10, 2 );
+	add_filter( 'manage_media-tags_custom_column', 	'mediatags_terms_column_row', 10, 3 );
+
+	if (floatval($wp_version) >= "3.1")
+	{
+		//add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
+
+		add_filter( 'manage_upload_sortable_columns', 'mediatags_admin_media_sort_columns' );
+		add_filter( 'manage_edit-media-tags_sortable_columns', 'mediatags_admin_terms_sort_columns' );
+		add_filter( 'get_terms_args', 'mediatags_admin_terms_args_filter', 10, 2);
+	}
+}
+
+// New for WP 3.1 - Adds out Bulk action item to the Bulk admin dropdown
+function mediatags_admin_media_bulk_actions($actions)
+{
+	$actions[MEDIA_TAGS_TAXONOMY] = _x('Media-Tags', 'column name', MEDIA_TAGS_I18N_DOMAIN);
+	return $actions;
+}
+
+function mediatags_admin_media_sort_columns($cols)
+{
+	$cols[MEDIA_TAGS_TAXONOMY] = MEDIA_TAGS_TAXONOMY;
+	return $cols;
+}
+
+function mediatags_admin_terms_sort_columns($cols)
+{
+	$cols['mediatags_used'] = 'mediatags_used';
+	return $cols;	
+}
+
+function mediatags_wp_head()
+{
+	add_mediatags_alternate_link();
+}
+
+function mediatags_admin_head_proc()
+{
+	// All header output moved to the admin_init function.
+}
+
+function mediatags_admin_footer()
+{
+	global $mediatags, $wp_version;
+	
+	if (function_exists('get_current_screen'))
+		$current_screen = get_current_screen();
+	else
+	{
+		global $current_screen;			
+	}
+
+	if ((isset($current_screen->id)) 
+	 && (($current_screen->id == "upload") || ($current_screen->id == "media-upload")) 
+	 &&  ( current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP )) )
+	{
+		$mediatag_admin_bulk_library = get_option('mediatag_admin_bulk_library', 'yes'); 
+		$mediatag_admin_bulk_inline = get_option('mediatag_admin_bulk_inline', 'yes'); 
+		
+		if ($mediatag_admin_bulk_library == "yes")
+		{	
+			mediatags_bulk_admin_panel();	
+			?>
+			<div id="media-tags-bulk-selection-error" title="Media Tags Selection Error" style="display:none"><?php echo __('<p>You must first select which Media Items to change.</p><p>Please close this dialog window and make your selection.</p>', MEDIA_TAGS_I18N_DOMAIN); ?>
+			</div>
+			<?php
+			show_mediataga_admin_buttons_text();
+
+			// In WP 3.1 we can use a hook to add items to the bulk action dropdown. Prior to 3.1 we do this via jQuery.
+			if (floatval($wp_version) < "3.1")
+			{
+				?>
+				<script type='text/javascript'>
+				jQuery(document).ready(function() {
+					jQuery('form#posts-filter select[name=action]').append('<option value="media-tags"><?php 
+						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
+					jQuery('form#posts-filter select[name=action2]').append('<option value="media-tags"><?php 
+						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
+				});
+				</script>
+				<?php
+			}			
+		}
+	}
+}	
+
+function show_mediataga_admin_buttons_text()
+{
+	// My way of setting some text that can be pulled in via JS. This is much better than hard-coded inside the JS code. Plus I can provided language support for these different buttons labels. 
+	?>
+	<div id="media-tags-bulk-content-buttons" style="display: none">
+		<div class="close"><?php echo _x('Close', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>
+		<div class="submit"><?php echo _x('Submit', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>
+		<div class="cancel"><?php echo _x('Cancel', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>
+		<div class="media-tags"><?php echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>
+		<div class="show"><?php echo _x('Show', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>
+		<div class="hide"><?php echo _x('Hide', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>		
+		<div class="all"><?php echo _x('All Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></div>		
+	</div>
+	<?php
+}
+
+function mediatags_admin_panels()
+{
+	// Adds the 'Media-Tags' submenu option under the Media nav
+
+	add_media_page( _x("Media-Tags", 'menu label', MEDIA_TAGS_I18N_DOMAIN),
+					_x("Media-Tags", 'page label', MEDIA_TAGS_I18N_DOMAIN),
+					MEDIATAGS_MANAGE_TERMS_CAP,
+					"edit-tags.php?taxonomy=media-tags" );
+	
+	// Adds the 'Media-Tags' top-level menu panel
+	
+	add_menu_page( 	_x("Media-Tags Settings", 'page label', MEDIA_TAGS_I18N_DOMAIN), 
+					_x("Media-Tags", 'menu label', MEDIA_TAGS_I18N_DOMAIN),
+					MEDIATAGS_SETTINGS_CAP,
+					'mediatags_settings_panel', 
+					'mediatags_settings_panel');
+
+	add_submenu_page( 'mediatags_settings_panel', 
+					_x('Media-Tags Settings', 'page label', MEDIA_TAGS_I18N_DOMAIN), 
+					_x('Settings', 'menu label', 'menu label', MEDIA_TAGS_I18N_DOMAIN), 
+					MEDIATAGS_SETTINGS_CAP,
+					'mediatags_settings_panel', 
+					'mediatags_settings_panel');
+
+	add_submenu_page( 'mediatags_settings_panel', 
+					_x('Roles Management','page label', MEDIA_TAGS_I18N_DOMAIN), 
+					_x('Roles Management', 'menu label', MEDIA_TAGS_I18N_DOMAIN), 
+					MEDIATAGS_MANAGE_ROLE_CAP,
+					'mediatags_roles_panel', 
+					'mediatags_roles_panel');
+
+	add_submenu_page( 'mediatags_settings_panel', 
+					_x('Third Party Settings','page label', MEDIA_TAGS_I18N_DOMAIN), 
+					_x('Third Party Settings', 'menu label', MEDIA_TAGS_I18N_DOMAIN), 
+					MEDIATAGS_SETTINGS_CAP,
+					'mediatags_thirdparty_panel', 
+					'mediatags_thirdparty_panel');
+
+	add_submenu_page( 'mediatags_settings_panel', 
+					_x('Help', 'page label', MEDIA_TAGS_I18N_DOMAIN), 
+					_x('Help', 'menu label', MEDIA_TAGS_I18N_DOMAIN), 
+					MEDIATAGS_SETTINGS_CAP,
+					'mediatags_help_panel', 
+					'mediatags_help_panel');
+}
+
+function mediatags_add_default_capabilities() 
+{
+	$role = get_role('contributor');
+	$role->add_cap(MEDIATAGS_ASSIGN_TERMS_CAP);
+
+	$role = get_role('author');
+	$role->add_cap(MEDIATAGS_ASSIGN_TERMS_CAP);
+
+	$role = get_role('editor');
+	$role->add_cap(MEDIATAGS_MANAGE_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_ASSIGN_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_EDIT_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_DELETE_TERMS_CAP);
+	
+	$role = get_role('administrator');
+	$role->add_cap(MEDIATAGS_SETTINGS_CAP);
+	$role->add_cap(MEDIATAGS_MANAGE_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_ASSIGN_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_EDIT_TERMS_CAP);
+	$role->add_cap(MEDIATAGS_DELETE_TERMS_CAP);	
+	$role->add_cap(MEDIATAGS_MANAGE_ROLE_CAP);	
+}
+
+function mediatags_filter_posts()
+{
+	// First need to check the screen. We only want to show the Media-Tags dropdown on the Media > Library page
+	if (function_exists('get_current_screen'))
+		$current_screen = get_current_screen();
+	else
+	{
+		global $current_screen;			
+	}
+
+	if ((isset($current_screen->id)) && ($current_screen->id == "upload")) 
+	{
+		mediatags_show_library_select(MEDIA_TAGS_TAXONOMY, '', MEDIA_TAGS_TAXONOMY, __('All Media-Tags'));
+	}
+}
+
+// Called from mediatags_filter_posts to display and handle the actual Media-tags dropdown.
+function mediatags_show_library_select($term_slug='', $select_label='', $select_key='', $select_default_option='')
+{
+	if (!$term_slug) return;
+
+	if (strlen($select_label) == 0)
+		$select_label = $term_slug;
+
+	if (strlen($select_key) == 0)
+		$select_key = $term_slug;
+
+	if (isset($_REQUEST[$term_slug]))
+		$filter_term = $_REQUEST[$term_slug];
+	else
+		$filter_term = "";
+		
+	$posttype_terms 			= (array) get_terms( $term_slug, array('get' => 'all') );				
+	if ($posttype_terms)
+	{
+		?>
+		<select id="<?php echo $select_key; ?>" name="<?php echo $select_key; ?>">
+			<option selected="selected" value=""><?php echo $select_default_option; ?></option><?php
+			foreach($posttype_terms as $_idx => $_item)
+			{
+				$is_selected = "";
+				//if (array_search($_item->term_id, $selected_posttype_terms) !== false)
+				if ($filter_term == $_item->slug)				
+					$is_selected = ' selected="selected" ';
+					
+				?><option value="<?php echo $_item->slug; ?>" <?php echo $is_selected; ?>><?php echo $_item->name; ?></option><?php
+			}
+			?>
+		</select>
+		<?php
+	}
+}
+
+// Builds the Media > Library column cell which displays the Media-Tags used for the specific Media item
+function mediatags_terms_column_row( $something, $column_name, $term_id ) 
+{
+	$row_content = "";
+	
+	if ($column_name == "mediatags_used")
+	{
+		$media_tag = get_term( $term_id, MEDIA_TAGS_TAXONOMY );
+		if ($media_tag)
+		{
+			if ($media_tag->count > 0)
+			{
+				$row_content = '<a href="'. 
+					get_mediatag_admin_library_link( $term_id). '">'.  $media_tag->count. '</a>';
 			}
 			else
 			{
-				$selected_tag = '';
+				$row_content = $media_tag->count;
+			}			
+		}		
+	}	
+	return $row_content;
+}
 
-				if ($tag_item->count > 0)
+// Build the output displayed when a user edits a Media item
+function mediatags_show_fields_to_edit($form_fields, $post) 
+{		
+	if (current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP ))
+	{
+		$_REQUEST_URI = explode('?', $_SERVER['REQUEST_URI']);		
+		if (substr_compare($_REQUEST_URI[0], '/wp-admin/async-upload.php', strlen('/wp-admin/async-upload.php') * -1, 
+			strlen('/wp-admin/async-upload.php'), TRUE) == 0)
+			$post_media_tags_fields = mediatags_get_fields($post->ID, true);
+		else
+			$post_media_tags_fields = mediatags_get_fields($post->ID, false);
+
+		if (strlen($post_media_tags_fields))
+			$post_media_tags_fields = "<br />". __('Enter media tags in the space above. Enter multiple tags 
+				separated with comma. Or select from the tag(s) below', MEDIA_TAGS_I18N_DOMAIN) . $post_media_tags_fields;
+		else
+			$post_media_tags_fields = "<br />". __('Enter media tags in the space above. 
+			Enter multiple tags separated with comma.', MEDIA_TAGS_I18N_DOMAIN);
+	
+    	$form_fields['media-meta'] = array(
+       		'label' => __('Media-Tags:', MEDIA_TAGS_I18N_DOMAIN),
+   			'input' => 'html',
+   			'html' => "<input type='text' name='attachments[$post->ID][media_tags_input]' 
+				id='attachments[$post->ID][media_tags_input]'
+       			size='50' value='' />
+				$post_media_tags_fields "
+		);
+	}
+	return $form_fields;
+}
+
+
+function mediatags_get_fields($post_id, $force_load_tags = false)
+{
+	if (!is_object(get_post($post_id))) return '';
+	
+	$master_media_tag_fields = "";
+	
+	$post_media_tags = mediatags_get_post_mediatags($post_id);
+	
+	$used_tags_array = array();
+	foreach ($post_media_tags as $tslug => $ttag) {
+		$used_tags_array[] = '<li><input type="checkbox" id="label-'.$post_id.'-'.$tslug.'" '
+			.'name="attachments['.$post_id.'][media_tags_checkbox]['.$tslug.']" checked="checked" />'
+			.'<label for="label-'.$post_id.'-'.$tslug.'">'.__($ttag->name).'</label></li>';
+	}
+	if ($force_load_tags == true)
+		$click_event = 'onclick="return false"';
+	else
+		$click_event = '';
+		
+	if (count($used_tags_array))
+		$master_media_tag_fields .= '<a id="media-tags-used-'. $post_id .'" '. $click_event .' class="media-tags-show-hide-used" 
+			post-id="'.$post_id.'" href="#">Media Tags for this attachment</a>'
+			.'<div id="media-tags-list-used-'. $post_id .'" class="media-tags-list-used"><ul 
+				class="media-tags-list">'.implode('', $used_tags_array).'</ul></div>';	
+				
+	$master_media_tag_fields .= '<a id="media-tags-common-'. $post_id .'" '. $click_event .' class="media-tags-show-hide-common" 
+		post-id="'.$post_id.'" href="#">Show Common Media Tags</a>'
+		.'<div id="media-tags-list-common-'. $post_id .'" class="media-tags-list-common"><ul 
+		class="media-tags-list">';
+		
+	if ($force_load_tags == true)
+	{
+		$master_media_tag_fields .= mediatags_load_post_mediatags_type($post_id, 'common');
+	}		
+	$master_media_tag_fields .= '</ul></div>';
+	
+	$master_media_tag_fields .= '<a id="media-tags-uncommon-'.$post_id.'" '. $click_event .' class="media-tags-show-hide-uncommon" 
+		post-id="'.$post_id.'" href="#">Show Uncommon Media Tags</a>'
+		.'<div id="media-tags-list-uncommon-'. $post_id .'" class="media-tags-list-uncommon"><ul 
+		class="media-tags-list">';
+	if ($force_load_tags == true)
+	{
+		$master_media_tag_fields .= mediatags_load_post_mediatags_type($post_id, 'uncommon');
+	}		
+	$master_media_tag_fields .= '</ul></div>';
+		
+	return $master_media_tag_fields;
+}
+
+function mediatags_get_mediatags_ajax()
+{
+	if (!isset($_POST['post_id']) || empty($_POST['post_id'])) return '';
+	$post_id = $_POST['post_id'];
+	if (!is_object(get_post($post_id))) return '';
+
+	if (!isset($_POST['mediatags_type']) || empty($_POST['mediatags_type'])) return '';
+	
+	$mediatags_type = $_POST['mediatags_type'];
+	die(mediatags_load_post_mediatags_type($post_id, $mediatags_type));
+}
+
+function mediatags_load_post_mediatags_type($post_id, $mediatags_type)
+{
+	$post_media_tags = mediatags_get_post_mediatags($post_id);
+	$master_list = mediatags_load_master();
+
+	$meditags_items = array();
+	if ( (is_array($master_list)) && (count($master_list)) )
+	{
+		foreach ($master_list as $master_slug => $master_tag) 
+		{
+			// If the Media-Tag term is already assocated with the post item. Skip it. 
+			if (in_array($master_slug, array_keys($post_media_tags))) continue;
+			
+			if ($mediatags_type == "common")
+			{
+				if ($master_tag->count > 0)
 				{
-					$master_media_tag_fields_tmp['used_all'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
-						name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
-						<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+					$meditags_items[] = '<li><input type="checkbox" id="label-'. $post_id .'-'. $master_slug .'" '
+					.'name="attachments['. $post_id .'][media_tags_checkbox]['. $master_slug .']" />'
+					.'<label for="label-'. $post_id .'-'. $master_slug .'">'. __($master_tag->name) .'</label>';
 				}
-				else
+			}
+			else if ($mediatags_type == "uncommon")
+			{
+				if ($master_tag->count == 0)
 				{
-					$master_media_tag_fields_tmp['unused_all'] .= "<li><input type='checkbox' id='label-$post_id-".$idx."'
-						name='attachments[$post_id][media_tags_checkbox][$idx]' " .$selected_tag. " />
-						<label for='label-".$post_id."-".$idx."'>" . __($tag_item->name) . "</label></li>";
+					$meditags_items[] = '<li><input type="checkbox" id="label-'. $post_id .'-'. $master_slug .'" '
+					.'name="attachments['. $post_id .'][media_tags_checkbox]['. $master_slug .']" />'
+					.'<label for="label-'. $post_id .'-'. $master_slug .'">'. __($master_tag->name) .'</label>';
 				}
 			}
 		}
-		if (strlen($master_media_tag_fields_tmp['used_item']))
-			$master_media_tag_fields .= '<a id="media-tags-show-hide-used" href="#">Media Tags for this attachment</a>
-				<div id="media-tags-list-used"><ul class="media-tags-list">'. 
-					$master_media_tag_fields_tmp['used_item'] . '</ul></div>';
-		if (strlen($master_media_tag_fields_tmp['used_all']))
-			$master_media_tag_fields .= '<a id="media-tags-show-hide-common" href="#">Show Common Media Tags</a>
-				<div id="media-tags-list-common"><ul class="media-tags-list">'. $master_media_tag_fields_tmp['used_all'] . '</ul></div>';
-		if (strlen($master_media_tag_fields_tmp['unused_all']))
-			$master_media_tag_fields .= '<a id="media-tags-show-hide-uncommon" href="#">Show Uncommon Media Tags</a>
-				<div id="media-tags-list-uncommon"><ul class="media-tags-list">'.$master_media_tag_fields_tmp['unused_all'] . '</ul></div>';
-
-
-//		if (strlen($master_media_tag_fields))
-//			$master_media_tag_fields = '<ul id="media-tags-list">'. $master_media_tag_fields . '</ul>';
 	}
-	return $master_media_tag_fields;
+	if (count($meditags_items))
+		return implode('', $meditags_items);
+	else
+	{
+		if ($mediatags_type == "common")
+			return 'No Common Media-Tags found.';
+		else if ($mediatags_type == "uncommon")
+			return 'No Uncommon Media-Tags found.';
+	}
 }
 
 function meditags_process_attachment_fields_to_save($post, $attachment) 
 {	
+	//echo "post<pre>"; print_r($post); echo "</pre>";
+	//echo "attachment<pre>"; print_r($attachment); echo "</pre>";
+	//exit;
+	
 	$media_tags_array = array();
 
 	if (isset($attachment['media_tags_checkbox']))
@@ -167,574 +576,19 @@ function mediatags_delete_attachment_proc($postid = '')
 {
 	if (!$postid) return;
 	
-//	$tt_ids = wp_get_object_terms($postid, MEDIA_TAGS_TAXONOMY, 'fields=tt_ids');
-//	echo "tt_ids<pre>"; print_r($tt_ids); echo "</pre>";
-//	exit;
 	wp_delete_object_term_relationships($postid, array(MEDIA_TAGS_TAXONOMY));	
-	//wp_update_term_count( $postid, MEDIA_TAGS_TAXONOMY);
-}
-
-function mediatags_mgmt_panel() {
-	require_once(ABSPATH . 'wp-includes/pluggable.php');
-
-	media_tags_register_columns();
-
-	//$can_manage = current_user_can('manage_media_tags');	
-	if ( ! current_user_can( 'manage_categories' ) )
-		return;
-	
-	$messages[1] = __('Media Tag added.');
-	$messages[2] = __('Media Tag deleted.');
-	$messages[3] = __('Media Tag updated.');
-	$messages[4] = __('Media Tag not added.');
-	$messages[5] = __('Media Tag not updated.');
-	$messages[6] = __('Media Tags deleted.');
-	
-	$title = __('Media Tags');
-	?>
-	<div class="wrap nosubsub">
-		<?php screen_icon(); ?>
-		<h2><?php echo $title; 
-		if ( isset($_GET['s']) && $_GET['s'] )
-			printf( '<span class="subtitle">' . __('Search results for &#8220;%s&#8221;') . '</span>', wp_specialchars( stripslashes($_GET['s']) ) );
-		?></h2>
-		<?php if ( isset($_GET['message']) && ( $msg = (int) $_GET['message'] ) ) : ?>
-		<div id="message" class="updated fade"><p><?php echo $messages[$msg]; ?></p></div>
-		<?php $_SERVER['REQUEST_URI'] = remove_query_arg(array('message'), $_SERVER['REQUEST_URI']);
-		endif; ?>
-
-		<?php
-			if ((isset($_GET['action'])) && ($_GET['action'] == 'editmediatag'))
-			{
-				$mediatag_ID = (int) $_GET['mediatag_ID'];
-				mediatags_process_edit($mediatag_ID);
-			}
-			else
-			{
-				?>
-				<form class="search-form" method="get"
-					action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php">
-				<p class="search-box">
-					<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY; ?>" />
-					<input type="hidden" name="action" value="searchmediatag" />
-					<label class="hidden" for="media-tags-search-input"><?php _e( 'Search Media Tags' ); ?>:</label>
-					<input type="text" class="search-input" id="media-tags-search-input" name="s" value="<?php _admin_search_query(); ?>" />
-					<input type="submit" value="<?php _e( 'Search Media Tags' ); ?>" class="button" />
-				</p>
-				</form>
-				<br class="clear" />
-		
-				<div id="col-container">
-					<div id="col-right">
-						<div class="col-wrap">
-							<form id="posts-filter" method="get"
-								action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php">
-								<div class="tablenav">
-									<?php
-										$pagenum = isset( $_GET['pagenum'] ) ? absint( $_GET['pagenum'] ) : 0;
-										if ( empty($pagenum) )	$pagenum = 1;
-								
-										$tagsperpage = apply_filters("tagsperpage",20);
-
-										$page_links = paginate_links( array(
-											'base' => add_query_arg( 'pagenum', '%#%' ),
-											'format' => '',
-												'prev_text' => __('&laquo;'),
-												'next_text' => __('&raquo;'),
-												'total' => ceil(wp_count_terms(MEDIA_TAGS_TAXONOMY) / $tagsperpage),
-												'current' => $pagenum
-										));
-
-										if ( $page_links )
-											echo "<div class='tablenav-pages'>$page_links</div>";
-									?>
-
-									<div class="alignleft actions">
-										<select name="action">
-											<option value="" selected="selected"><?php _e('Bulk Actions'); ?></option>
-											<option value="deletemediatagsbulk"><?php _e('Delete'); ?></option>
-										</select>
-										<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY ?>" />
-										<input type="submit" value="<?php _e('Apply'); ?>" name="doaction" 
-											id="doaction" class="button-secondary action" />
-										<?php wp_nonce_field('media-tags-bulk'); ?>
-									</div>
-
-									<br class="clear" />
-								</div>
-
-								<div class="clear"></div>
-
-							<table class="widefat tag fixed" cellspacing="0">
-							<thead>
-								<tr><?php print_column_headers('edit-media-tags'); ?></tr>
-							</thead>
-
-							<tfoot>
-							<tr><?php print_column_headers('edit-media-tags', false); ?></tr>
-							</tfoot>
-
-							<tbody id="the-list" class="list:tag">
-							<?php
-								$searchterms = isset( $_GET['s'] ) ? trim( $_GET['s'] ) : '';
-								$count = media_tags_display_rows( MEDIA_TAGS_TAXONOMY, $pagenum, $tagsperpage, $searchterms );
-							?>
-							</tbody>
-							</table>
-
-							<div class="tablenav">
-							<?php
-								if ( $page_links )
-									echo "<div class='tablenav-pages'>$page_links</div>"; ?>
-
-								<div class="alignleft actions">
-									<select name="action2">
-										<option value="" selected="selected"><?php _e('Bulk Actions'); ?></option>
-										<option value="deletemediatagsbulk"><?php _e('Delete'); ?></option>
-									</select>
-									<input type="submit" value="<?php _e('Apply'); ?>" name="doaction2" id="doaction2"
-									 class="button-secondary action" />
-								</div>
-
-								<br class="clear" />
-							</div>
-
-							<br class="clear" />
-						</form>
-				</div>
-			</div><!-- /col-right -->
-
-			<div id="col-left">
-				<div class="col-wrap">
-					<?php 
-						//if ( $can_manage ) 
-						{
-							do_action('add_tag_form_pre'); ?>
-
-							<div class="form-wrap">
-								<h3><?php _e('Add a New Media Tag'); ?></h3>
-								<div id="ajax-response"></div>
-
-								<form name="addmediatag" id="addmediatag" method="post" class="add:the-list: validate"
-									action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=<?php echo ADMIN_MENU_KEY; ?>">
-									<input type="hidden" name="action" value="addmediatag" />
-
-									<div class="form-field form-required">
-										<label for="name"><?php _e('Media Tag name') ?></label>
-										<input name="name" id="name" type="text" value="" size="40" aria-required="true" />
-									    <p><?php _e('The name is how the media tag appears on your site.'); ?></p>
-									</div>
-
-									<div class="form-field">
-										<label for="slug"><?php _e('Media Tag slug') ?></label>
-										<input name="slug" id="slug" type="text" value="" size="40" />
-									    <p><?php _e('The &#8220;slug&#8221; is the URL-friendly version of the name. 
-											It is usually all lowercase and contains only letters, numbers, and hyphens.'); ?></p>
-									</div>
-
-									<p class="submit"><input type="submit" class="button" name="submit" 
-											value="<?php _e('Add Media Tag'); ?>" /></p>
-									<?php //do_action('add_tag_form'); ?>
-								</form>
-							</div>
-							<?php 
-						} 
-					?>
-
-				</div>
-			</div><!-- /col-left -->
-		</div><!-- /col-container -->
-		<?php } ?>
-	</div><!-- /wrap -->
-	<?php inline_edit_mediatags_row('edit-media-tags'); ?>
-	<?php
-}
-
-function media_tags_register_columns() {
-	if (!function_exists('register_column_headers'))
-		require_once(ABSPATH . 'wp-admin/includes/template.php');
-
-	$media_tags_edit_columns = array('cb' => '<input type="checkbox" />',
-														'name' => __('Name'),
-														'slug' => __('Slug'),
-														'posts' => __('Used'));
-
-	// Register columns for Edit Media Tags listing
-	register_column_headers('edit-media-tags', $media_tags_edit_columns );
 }
 
 
-function media_tags_display_rows( $taxonomy = '', $page = 1, $pagesize = 20, $searchterms = '' ) {
-
-	// Get a page worth of tags
-	$start = ($page - 1) * $pagesize;
-
-	$args = array('offset' => $start, 'number' => $pagesize, 'hide_empty' => 0);
-
-	if ( !empty( $searchterms ) ) {
-		$args['search'] = $searchterms;
-	}
-
-	$tags = get_terms($taxonomy, $args );
-	//echo "tags<pre>"; print_r($tags); echo "</pre>";
-
-	// convert it to table rows
-	$out = '';
-	$count = 0;
-	foreach( $tags as $tag )
-		$out .= _media_tag_row( $tag, ++$count % 2 ? ' class="iedit alternate"' : ' class="iedit"' );
-
-	// filter and send to screen
-	echo $out;
-	return $count;
-}
-
-function _media_tag_row( $tag, $class = '' ) {
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
-	
-	$count = number_format_i18n( $tag->count );
-	$count = ( $count > 0 ) ? "<a href='".
-		get_option('siteurl')."/wp-admin/upload.php?mediatag_id=$tag->term_id'>$count</a>" : $count;
-
-	$name = apply_filters( 'term_name', $tag->name );
-	$qe_data = get_term($tag->term_id, MEDIA_TAGS_TAXONOMY, object, 'edit');
-	//$edit_link = $base_url ."&action=editmediatag&amp;mediatag_ID=$tag->term_id";
-	$edit_link = get_mediatag_admin_edit_link( $tag->term_id );
-	$view_link = get_mediatag_link($tag->term_id);
-
-		
-	$out = '';
-	$out .= '<tr id="tag-' . $tag->term_id . '"' . $class . '>';
-	$columns = get_column_headers('edit-media-tags');
-	$hidden = get_hidden_columns('edit-media-tags');
-	foreach ( $columns as $column_name => $column_display_name ) {
-		$class = "class=\"$column_name column-$column_name\"";
-
-		$style = '';
-		if ( in_array($column_name, $hidden) )
-			$style = ' style="display:none;"';
-
-		$attributes = "$class$style";
-
-		switch ($column_name) {
-			case 'cb':
-				$out .= '<th scope="row" class="check-column"> <input type="checkbox" name="delete_media_tags[]" value="' 
-					. $tag->term_id . '" /></th>';
-				break;
-			
-			case 'name':
-				$out .= '<td ' . $attributes . '><strong><a class="row-title" href="' . $edit_link . '" title="' . 
-					esc_attr(sprintf(__('Edit "%s"'), $name)) . '">' . $name . '</a></strong><br />';
-				$actions = array();
-				$actions['edit'] = '<a href="' . $edit_link . '">' . __('Edit') . '</a>';
-				$actions['inline hide-if-no-js'] = '<a href="#" class="editinline-mediatag">' . __('Quick&nbsp;Edit') . '</a>';
-				$actions['delete'] = "<a class='submitdelete' href='" . wp_nonce_url(get_option('siteurl')
-					."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&amp;action=deletemediatag&amp;mediatag_ID=$tag->term_id", 
-					'delete-tag_' . $tag->term_id) . "' onclick=\"if ( confirm('" . 
-					esc_js(sprintf(__("You are about to delete this media tag '%s'\n 'Cancel' to stop, 'OK' to delete."), $name )) . "') ) 
-					{ return true;}return false;\">" . __('Delete') . "</a>";
-				$actions['view'] = '<a href="' . $view_link . '">' . __('View') . '</a>';
-
-				$action_count = count($actions);
-				$i = 0;
-				$out .= '<div class="row-actions">';
-				foreach ( $actions as $action => $link ) {
-					++$i;
-					( $i == $action_count ) ? $sep = '' : $sep = ' | ';
-					$out .= "<span class='$action'>$link$sep</span>";
-				}
-				$out .= '</div>';
-				$out .= '<div class="hidden" id="inline_' . $qe_data->term_id . '">';
-				$out .= '<div class="name">' . $qe_data->name . '</div>';
-				$out .= '<div class="slug">' . $qe_data->slug . '</div></div></td>';
-				break;
-
-			case 'slug':
-				$out .= "<td $attributes>$tag->slug</td>";
-				break;
-
-			case 'posts':
-				$attributes = 'class="posts column-posts num"' . $style;
-				$out .= "<td $attributes>$count</td>";
-				break;
-		}
-	}
-
-	$out .= '</tr>';
-
-	return $out;
-}
-
-
-function inline_edit_mediatags_row($type) {
-
-	if ( ! current_user_can( 'manage_categories' ) )
-		return;
-
-	$is_tag = $type == 'edit-media-tags';
-	$columns = get_column_headers($type);
-	$hidden = array_intersect( array_keys( $columns ), array_filter( get_hidden_columns($type) ) );
-	$col_count = count($columns) - count($hidden);
-	?>
-
-<form method="get" action=""><table style="display: none"><tbody id="inlineedit">
-	<tr id="inline-edit-mediatag" class="inline-edit-row" style="display: none"><td colspan="<?php echo $col_count; ?>">
-
-		<fieldset><div class="inline-edit-col">
-			<h4><?php _e( 'Quick Edit' ); ?></h4>
-
-			<label>
-				<span class="title"><?php _e( 'Name' ); ?></span>
-				<span class="input-text-wrap"><input type="text" name="name" class="ptitle" value="" /></span>
-			</label>
-
-			<label>
-				<span class="title"><?php _e( 'Slug' ); ?></span>
-				<span class="input-text-wrap"><input type="text" name="slug" class="ptitle" value="" /></span>
-			</label>
-
-		</div></fieldset>
-
-<?php
-
-	$core_columns = array( 'cb' => true, 'description' => true, 'name' => true, 'slug' => true, 'posts' => true );
-
-	foreach ( $columns as $column_name => $column_display_name ) {
-		if ( isset( $core_columns[$column_name] ) )
-			continue;
-		do_action( 'quick_edit_custom_box', $column_name, $type );
-	}
-
-?>
-
-	<p class="inline-edit-save submit">
-		<a accesskey="c" href="#inline-edit-mediatag" title="<?php _e('Cancel'); ?>" class="cancel button-secondary alignleft"><?php _e('Cancel'); ?></a>
-		<?php $update_text = ( $is_tag ) ? __( 'Update Tag' ) : __( 'Update Category' ); ?>
-		<a accesskey="s" href="#inline-edit-mediatag" title="<?php echo esc_attr( $update_text ); ?>" class="save button-primary alignright"><?php echo $update_text; ?></a>
-		<img class="waiting" style="display:none;" src="images/loading.gif" alt="" />
-		<span class="error" style="display:none;"></span>
-		<?php wp_nonce_field( 'taxinlineeditnonce', '_inline_edit', false ); ?>
-		<br class="clear" />
-	</p>
-	</td></tr>
-	</tbody></table></form>
-<?php
-}
-
-
-function mediatags_process_actions()
+function media_upload_gallery_tab($tab_content='')
 {
-	
-	if (!isset($_REQUEST['action']))
-		return;
-
-	if (strlen($_REQUEST['action']) == 0)
-	{
-		if ((isset($_REQUEST['action2'])) && (strlen($_REQUEST['action2']) > 0))
-			$_REQUEST['action'] = $_REQUEST['action2'];
-		else
-			return;
-	}
-	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
-	
-	switch($_REQUEST['action'])
-	{
-		case 'inline-save-mediatag':
-			mediatags_process_inline_save();
-			exit;
-			break;
-			
-		case 'updatemediatag':
-			mediatags_process_update();
-			break;
-			
-		case 'deletemediatag':
-			mediatags_process_delete();
-			break;
-
-		case 'deletemediatagsbulk':
-			mediatags_process_delete_bulk();
-			break;
-			
-		case 'addmediatag':
-			mediatags_process_add();
-			break;
-
-		default:
-			break;
-	}
-}
-
-function mediatags_process_add()
-{		
-	if (!isset($_REQUEST['name']))
-		return;
-
-	$media_tag_name = trim($_REQUEST['name']);
-
-	if ((isset($_REQUEST['slug'])) && (strlen($_REQUEST['slug'])))
-		$media_tag_slug = trim($_REQUEST['slug']);
-	else
-		$media_tag_slug = trim($_REQUEST['name']);
-		
-	$media_tag_slug = sanitize_title_with_dashes($media_tag_slug);
-	
-	if ( '' === $media_tag_slug )
-		return;
-
-	if (!function_exists('wp_redirect'))
-		require_once(ABSPATH . 'wp-includes/pluggable.php');
-
-	if ( !term_exists( $media_tag_name, MEDIA_TAGS_TAXONOMY ) ) 
-	{
-		$ret = wp_insert_term( $media_tag_name, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug));
-		if ( $ret && !is_wp_error( $ret ) ) {
-			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=1");
-		} else {
-			wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=4");
-		}
-		exit;
-	}
-}
-
-function mediatags_process_delete()
-{
-	if (!isset($_REQUEST['mediatag_ID']))
-		return;
-		
-	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
-	wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
-	
-	$redirect_url = get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=2";
-	if (isset($_REQUEST['pagenum']))
-		$redirect_url .= "pagenum=".$_REQUEST['pagenum'];
-
-	if (!function_exists('wp_redirect'))
-		require_once(ABSPATH . 'wp-includes/pluggable.php');
-	
-	wp_redirect($redirect_url);
-	exit;	
-}
-
-function mediatags_process_delete_bulk()
-{
-	if ((isset($_REQUEST['delete_media_tags'])) && (is_array($_REQUEST['delete_media_tags'])))
-	{
-		foreach($_REQUEST['delete_media_tags'] as $delete_media_tag)
-		{
-			$mediatag_ID = intval($delete_media_tag);
-			wp_delete_term( $mediatag_ID, MEDIA_TAGS_TAXONOMY);
-		}
-		if (!function_exists('wp_redirect'))
-			require_once(ABSPATH . 'wp-includes/pluggable.php');
-		
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=6");
-	}	
-	else
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY);
-	exit;	
-}
-
-function mediatags_process_update()
-{
-	if (!isset($_REQUEST['mediatag_ID']))
-		return;
-
-	$mediatag_ID = intval($_REQUEST['mediatag_ID']);
-
-	$media_tag_name = trim($_REQUEST['name']);
-
-	if ((isset($_REQUEST['slug'])) && (strlen($_REQUEST['slug'])))
-		$media_tag_slug = trim($_REQUEST['slug']);
-	else
-		$media_tag_slug = trim($_REQUEST['name']);
-		
-	$media_tag_slug = sanitize_title_with_dashes($media_tag_slug);
-
-	if ( '' === $media_tag_slug )
-		return;
-
-	if (!function_exists('wp_redirect'))
-		require_once(ABSPATH . 'wp-includes/pluggable.php');
-
-	$ret = wp_update_term($mediatag_ID, MEDIA_TAGS_TAXONOMY, array('slug' => $media_tag_slug, 'name' => $media_tag_name));
-	if ( $ret && !is_wp_error( $ret ) ) {
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=3");
-	} else {
-		wp_redirect(get_option('siteurl') ."/wp-admin/upload.php?page=".ADMIN_MENU_KEY."&message=5");
-	}
-	exit;
-}
-
-function mediatags_process_edit($mediatag_ID)
-{
-	if ( empty($mediatag_ID) ) { ?>
-		<div id="message" class="updated fade"><p><strong><?php _e('A tag was not selected for editing.'); ?></strong></p></div>
-	<?php
-		return;
-	}
-	$tag = get_term($mediatag_ID, MEDIA_TAGS_TAXONOMY, OBJECT, 'edit');			
-
-	do_action('edit_tag_form_pre', $tag); ?>
-
-	<div class="wrap">
-	<?php //screen_icon(); ?>
-	<h2><?php _e('Edit Media Tag'); ?></h2>
-	<div id="ajax-response"></div>
-	<form name="edittag" id="edittag" method="post" class="validate"
-			action="<?php echo get_option('siteurl') ?>/wp-admin/upload.php?page=<?php echo ADMIN_MENU_KEY; ?>">
-		<input type="hidden" name="action" value="updatemediatag" />
-		<input type="hidden" name="mediatag_ID" value="<?php echo $tag->term_id ?>" />
-	<?php wp_original_referer_field(true, 'previous'); wp_nonce_field('update-tag_' . $mediatag_ID); ?>
-		<table class="form-table">
-			<tr class="form-field form-required">
-				<th scope="row" valign="top"><label for="name"><?php _e('Tag name') ?></label></th>
-				<td><input name="name" id="name" type="text" value="<?php if ( isset( $tag->name ) ) echo esc_attr($tag->name); ?>" size="40" aria-required="true" />
-	            <p><?php _e('The name is how the tag appears on your site.'); ?></p></td>
-			</tr>
-			<tr class="form-field">
-				<th scope="row" valign="top"><label for="slug"><?php _e('Tag slug') ?></label></th>
-				<td><input name="slug" id="slug" type="text" value="<?php if ( isset( $tag->slug ) ) echo esc_attr(apply_filters('editable_slug', $tag->slug)); ?>" size="40" />
-	            <p><?php _e('The &#8220;slug&#8221; is the URL-friendly version of the name. It is usually all lowercase and contains only letters, numbers, and hyphens.'); ?></p></td>
-			</tr>
-		</table>
-	<p class="submit"><input type="submit" class="button-primary" name="submit" value="<?php _e('Update Tag'); ?>" /></p>
-	<?php do_action('edit_tag_form', $tag); ?>
-	</form>
-	</div>
-	
-	<?php
-}
-
-function mediatags_process_inline_save()
-{
-	//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
-	// Hate that I have to move this local. 
-	
-	require_once(ABSPATH . 'wp-includes/pluggable.php');
-	
-	media_tags_register_columns();
-
-	if ( ! isset($_POST['tax_ID']) || ! ( $id = (int) $_POST['tax_ID'] ) )
-		die(-1);
-		
-	$updated = wp_update_term($id, MEDIA_TAGS_TAXONOMY, $_POST);
-	if ( $updated && !is_wp_error($updated) ) 
-	{
-		$tag = get_term( $updated['term_id'], MEDIA_TAGS_TAXONOMY );
-		if ( !$tag || is_wp_error( $tag ) )
-			die( __('Tag not updated.') );
-
-		echo _media_tag_row($tag);
-	} 
-	else {
-		die( __('Tag not updated.') );
-	}
+	mediatags_bulk_admin_panel();
+	show_mediataga_admin_buttons_text();		
 }
 
 function mediatag_upload_tab($tabs='')
 {
-	$tabs['mediatags'] = __('Media Tags');
+	$tabs['mediatags'] = _x('Media Tags', 'tab label', MEDIA_TAGS_I18N_DOMAIN);
 	return $tabs;
 }
 
@@ -759,16 +613,15 @@ function media_upload_mediatags_form($errors)
 	$total 		= 1;
 	$picarray 	= false;
 	
-	if (isset($_POST['type']))
-		$type = "type=".$_POST['type']."&";
+	if ((isset($_REQUEST['type'])) && (strlen($_REQUEST['type'])))
+		$type = "type=".$_REQUEST['type']."&";
 	
-	$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?".$type."tab=library&post_id=$post_id";
+		//$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?".$type."tab=library&post_id=".$post_id;
+		$form_action_url = "media-upload.php?".$type."tab=library&post_id=".$post_id;
+	
 	?>
 	<div style="clear:both"></div>
-	<?php
-	$mediatag_items = get_mediatags();
-	
-	?>	
+	<?php $mediatag_items = get_mediatags(); ?>	
 	
 	<form action="">
 	<div id="media-items">
@@ -785,8 +638,9 @@ function media_upload_mediatags_form($errors)
 					<div class="mediatag-item-count" 
 						style="display: block; float: right; width: 10%; line-height:36px;overflow:hidden;padding:0 10px;">
 					<?php 
-						$mediatag_count = ( $mediatag_item->count > 0 ) ? "<a href='".
-						$form_action_url."&mediatag_id=$mediatag_item->term_id'>$mediatag_item->count</a>" : $count;
+						$mediatags_library_link = MEDIA_TAGS_TAXONOMY ."=". $mediatag_item->slug;
+						$mediatag_count = ( $mediatag_item->count > 0 ) ? '<a href="'.
+							$form_action_url .'&amp;'. $mediatags_library_link .'">'. $mediatag_item->count .'</a>' : '0';
 						echo $mediatag_count;
 					?>
 					</div>
@@ -794,92 +648,9 @@ function media_upload_mediatags_form($errors)
 				<?php
 			}
 		}
-		//echo "mediatag_items<pre>"; print_r($mediatag_items); echo "</pre>";
 	?>
 	</div>
 	</form>
-	<?php
-}
-
-function mediatags_settings_panel()
-{
-	if (isset($_REQUEST))
-	{
-		//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
-		if (isset($_REQUEST['mediatag_google_plugin']))
-		{
-			if (strtolower($_REQUEST['mediatag_google_plugin']) == strtolower("yes"))
-				$mediatag_google_plugin = "yes";
-			else
-				$mediatag_google_plugin = "no";
-
-			update_option( 'mediatag_google_plugin', $mediatag_google_plugin );
-		}
-		if (isset($_REQUEST['mediatag_rss_feed']))
-		{
-			if (strtolower($_REQUEST['mediatag_rss_feed']) == strtolower("yes"))
-				$mediatag_rss_feed = "yes";
-			else
-				$mediatag_rss_feed = "no";
-
-			update_option( 'mediatag_rss_feed', $mediatag_rss_feed );
-		}
-		$update_message = "Media Tags Settings have been updated.";
-	}
-	$title = __('Media Tags');
-	?>
-	<div class="wrap nosubsub">
-		<?php screen_icon(); ?>
-		<h2><?php echo $title; ?></h2>
-		<?php 
-			if ( strlen($update_message)) { 
-				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
-			} 
-		?>
-		<form class="search-form" method="get" action="<?php echo get_option('siteurl') ?>/wp-admin/options-general.php">
-			<input type="hidden" name="page" value="<?php echo ADMIN_MENU_KEY ?>" />
-			<p><strong>This admin panel provides support functions for Third-Party plugins</strong></p>
-
-			<?php 
-			$mediatag_google_plugin = get_option('mediatag_google_plugin'); 
-			if (!$mediatag_google_plugin)
-				$mediatag_google_plugin = "no";
-			?>
-			<h3>Google XML Sitemaps</h3>
-			<p>Include Media-Tag URLs in your Google Sitemap XML file? (Requires the install of the <a
-				 href="http://wordpress.org/extend/plugins/google-sitemap-generator/">Google Sitemaps XML</a> plugin)<br />
-				<select id="mediatag_google_plugin" name="mediatag_google_plugin">
-					<option selected="selected" value="no">No</option>
-					<option <?php if ($mediatag_google_plugin == "yes"){ echo ' selected="selected" ';} ?> value="yes">Yes</option>
-				</select>
-			</p>
-			<hr />
-			<?php
-			$mediatag_rss_feed = get_option('mediatag_rss_feed'); 
-			if (!$mediatag_rss_feed)
-				$mediatag_rss_feed = "yes";
-			
-			?>
-			
-			
-			<h3>RSS Feed for Media Tags</h3>
-			<p>The Media Tags plugin now supports RSS feed when viewing an archive. For when viewing the URL http://www.mysite.com/media-tags/some-tag/ you can now access the RSS listing by adding '/feed' to the end of the URL as in http://www.mysite.com/media-tags/some-tag/feed/</p>
-			
-				<select id="mediatag_rss_feed" name="mediatag_rss_feed">
-					<option selected="selected" value="yes">Yes</option>
-					<option <?php if ($mediatag_rss_feed == "no"){ echo ' selected="selected" ';} ?> value="no">No</option>
-				</select>
-
-			<?php
-			
-			
-			
-			?>
-			<p class="submit">
-			<input type="submit" name="Submit" value="<?php _e('Update Options', 'mt_trans_domain' ) ?>" />
-			</p>
-		</form>
-	</div>
 	<?php
 }
 
@@ -888,15 +659,16 @@ function mediatags_reconcile_counts()
 	// This part of the function is to reconcile the counts on the mediatag items. Seems there was
 	// an issue in a previous version where the count could be wrong. 
 	$mediatag_items = get_mediatags();		
-	if ($mediatag_items) {
-	
-		foreach($mediatag_items as $mediatag_item) {
-
+	echo "mediatag_items<pre>"; print_r($mediatag_items); echo "</pre>";
+	if ($mediatag_items) 
+	{	
+		foreach($mediatag_items as $mediatag_item) 
+		{
 			$media_attachments =  get_objects_in_term($mediatag_item->term_id, MEDIA_TAGS_TAXONOMY);
-			if ($media_attachments) {
-			
-				foreach($media_attachments as $media_idx => $media_attachment_id) {
-
+			if ($media_attachments) 
+			{			
+				foreach($media_attachments as $media_idx => $media_attachment_id) 
+				{
 					if (!get_post($media_attachment_id))
 					{
 						mediatags_delete_attachment_proc($media_attachment_id);	
@@ -908,10 +680,35 @@ function mediatags_reconcile_counts()
 }
 
 
+/* Adds column header to the Media Library panel where we show the linked Media-Tags per row */
 function mediatags_library_column_header( $cols ) {
-	$cols[MEDIA_TAGS_TAXONOMY] = "Media Tags";
+	$cols[MEDIA_TAGS_TAXONOMY] = _x('Media Tags', 'column name', MEDIA_TAGS_I18N_DOMAIN);
 	return $cols;
 }
+
+function mediatags_terms_column_header($cols)
+{
+	if (isset($cols['posts']))
+		unset($cols['posts']);
+
+	$cols['mediatags_used'] = _x('Media Used', 'column name', MEDIA_TAGS_I18N_DOMAIN);
+	
+	return $cols;
+}
+
+function mediatags_admin_terms_args_filter($args, $taxonomies)
+{
+	if (((isset($_REQUEST['action'])) && ($_REQUEST['action'] == "fetch-list"))
+	 && ((isset($_REQUEST['taxonomy'])) && ($_REQUEST['taxonomy'] == MEDIA_TAGS_TAXONOMY)))	
+	{
+		if ((isset($args['orderby'])) && ($args['orderby'] == "mediatags_used"))
+			$args['orderby'] = "count";
+	}
+	
+	return $args;
+}
+
+/* Adds the row content, link Media-Tags, for each Library item row */
 
 function mediatags_library_column_row( $column_name, $id ) {
 
@@ -935,7 +732,7 @@ function mediatags_library_column_row( $column_name, $id ) {
 }
 
 function get_mediatag_admin_edit_link( $mediatag_id ) {
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". MEDIA_TAGS_ADMIN_MENU_KEY;
 
 	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
 	if ( is_wp_error( $media_tag ) )
@@ -948,7 +745,7 @@ function get_mediatag_admin_edit_link( $mediatag_id ) {
 
 function get_mediatag_admin_search_link( $mediatag_id ) {
 
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". ADMIN_MENU_KEY;
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". MEDIA_TAGS_ADMIN_MENU_KEY;
 
 	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
 	if ( is_wp_error( $media_tag ) )
@@ -961,13 +758,15 @@ function get_mediatag_admin_search_link( $mediatag_id ) {
 
 function get_mediatag_admin_library_link( $mediatag_id ) {
 
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?";
+//	$base_url = get_option('siteurl')."/wp-admin/upload.php?";
+	$base_url = "upload.php?";
 
 	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
 	if ( is_wp_error( $media_tag ) )
-		return $media_tag;
+		return;
 		
-	$edit_href = $base_url ."mediatag_id=".$media_tag->term_id;
+//	$edit_href = $base_url ."mediatag_id=".$media_tag->term_id;
+	$edit_href = $base_url . MEDIA_TAGS_TAXONOMY ."=".$media_tag->slug;
 
 	return $edit_href;
 }

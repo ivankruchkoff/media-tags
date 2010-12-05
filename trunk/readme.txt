@@ -1,10 +1,10 @@
 === Media Tags ===
 Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
-Tags: images, tags, media, shortcode, permalinks
-Requires at least: 2.7.1
-Tested up to: 3.0
-Stable tag: 2.2.9.2
+Tags: images, attachments, tags, media, shortcode, permalinks, taxonomy, role management, bulk admin
+Requires at least: 3.0
+Tested up to: 3.1
+Stable tag: 3.0.2
 
 == Description ==
 
@@ -12,27 +12,23 @@ Stable tag: 2.2.9.2
 
 Adds an input to the media upload and management screens. This input field can be used to "tag" a media file. Works with images, documents or anything.
 
-The Media-Tags plugin 2.0 has been completely rewritten to use to WordPress Taxonomy system for storing related media-tag information. As a benefit to this rewrite the user now has a new Media Tags management interface located under the Media section. Via this Media Tags management interface users can better manage the media tags used on the site. Deleting, renaming and adding new media tags is now quite simple. The Media Tags for the attachment are still display both under Media and the media popup on the editor screen as before. 
+Media-Tags 3.0 has been completely updated. Key features included in the new version are:
 
-Because the media tags plugin now uses the WordPress Taxonomy system you can now access attachments via the new permalink '/media-tags/'. This is very powerful and one of the most requested features since the plugins initial release. 
+* Bulk Administration of media items. This feature on both the Media > Library and Media Upload popup for the Post admin screen allow you to assign/remove Media-Tags to a selected group of media items. In previous versions you would need to edit each media item. 
 
-Also included as part of the plugin rewrite are some handy template tags to use via your theme. Below are a list of the template functions available. These are located in the plugin file mediatags_template_functions.php. All these functions should seem very familiar since they were modeled after the built-in WordPress tags template functions. 
+* Roles management. Under the Media-Tags Settings panel is a new Roles management panel. This panel allows you to fine tune the access by individual users. 
 
-* is_mediatag() - Tests is we are displaying a media-tags archive. Much like is_category() function
-* in_mediatag() - Tests is an attachment post marked in a certain mediatag_id.
-* get_mediatags()
-* list_mediatags() - Very handy for listing your media tags like list_tags() in the sidebar.php
-* get_mediatag_link() - Given a mediatag_id this functon will return a link href value. 
-* the_mediatags() - Very much like the post-level the_tags() to display a comma separated list of tags for a given post item. Used then displaying media tags archives. 
-* single_mediatag_title() - Get the Title of the Archive.
+* Internationalization. This is a much needed and requested features. Now all text handled by the plugin are using the WordPress i18n hooks to support translation into other languages. 
 
-Speaking of template tags you can now have even more control over the display of media tags archives. Much like the WordPress category template hierarchy you can now define a template file as part of your theme names 'mediatag.php' This is a special archive file tha can be used to display your loop of items. Alternately, you can also used ID specific template files like 'mediatag-25.php'. This is the same basic logic for category specific template file. It lets you use a special template file to display that specific media tag ID group. If the 'mediatag.php' template file is not provided then the default hierarchy or template files will be used starting with archive.php. Please not the template file when used will display attachments not the parent post. In WordPress all uploaded media is part of a parent/child association. Unlike the normal post related template the media tag template display the actual media files. 
+* Removed over 1000 lines of custom code. This old code was used to provide basic functionality for the tagging and URL rewrites. Since WordPress core functions have progressed over the last two years this custom code is no longer needed. This means the plugin will run cleaner and is more stable than previous releases. 
 
+* Better support for WordPress standard Taxonomy templates. In the past the plugin has supported a custom theme template, mediatag.php. The plugin now support the more standard WordPress templates taxonomy-media-tags.php.
 
-Just want to display attachments in a post or page? Use the new media tags shortcodes.
+* A new Help section. This new Help section provides many topics from general use to shortcodes tricks to template files support questions. Check it out. 
 
- 
-[Plugin Homepage](http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/ "Media-Tags Plugin")
+* Many other features have been added. Too many to mention here. 
+
+[Plugin Homepage](http://www.codehooligans.com/projects/wordpress/media-tags/ "Media-Tags Plugin")
 
 
 == Installation ==
@@ -45,98 +41,35 @@ Just want to display attachments in a post or page? Use the new media tags short
 5. Also all used media tags can be managed via the new Media Tags interface as part of the Media section in wp-admin. Management of Media tag is now part of a familiar interface like Tags and Categories. 
 6. Tweak out your template to display media tags (optional).
 
-== Frequently Asked Questions ==
+== Frequently Asked Questions == 
 
-= Ok I can now add tags to my images. So what, what can I do with them =
-
-Excellent question. By default if you are uploading an image to a post then inserting the media link into your post there is no need for you to use this plugin as it will not provide any benefit for you. But consider this scenario. You have 5 images you want to upload for a post. Two of these images will be inserted into the actual post content but the other three you want to display in the sidebar. How would you do this? Normally, in the past I would make the 3 images used in the sidebar follow a specific filename convention like sidebar1.jpg, sidebar2.jpg and sidebar3.jpg. This get ugly if you are managing lots of images. I would be better ( and one reason I wrote this plugin) to allow the tagging of the 3 images as 'sidebar'. 
-
-To actually get to the images for display in the sidebar you will need to have a way of filtering the attachments that are associated with a post. Luckily I've also included a simple function: `get_attachments_by_media_tags()` This function works similar to most other WordPress functions. 
-
-There are a number of arguments that can be passed into the function to filter the media:
-
-media_tags: (Required) This is a comma separated list of tags (slug) you want to filter on. 
-
-media_types: (Optional) This is a comma separated list of media types - gif, pdf, png to return
-
-search_by: (Optional) Default is 'slug'. Denotes what is passed in the 'media_tags' parameter. To search by media tag name pass the name into the 'media_tags' parameter and 'name' into the 'search_by' parameter. 
-
-post_parent: (Optional) This is the post ID of the related media items. This item is no longer required. This allows you to query media_tag items across all posts
-
-numberposts: (Optional) Default is all. Allows control over the number of items returned.
-
-orderby: (Optional) Default menu_order. See get_posts() for full list of options
-
-order: (Optional) Default 'DESC'. Controls the order of items. Other option is 'ASC'.
-
-offset: (Offset) Default is 0. Allows control over the subset of items returned.
-
-post_type: (Optional) Now that WP supports custom post types you can now filter based on your custom post type. Default is all posts types.
-
-nopaging: (Optional) Similar in functionality to the get_posts 'nopaging' argument. 
-
-return_type: (Optional) Defaults to Array. Other option is 'li'. In the case of shortcodes the return type is 'li' by default. When using the 'li' return type each element is given a class of 'media_tag_list' and an id of 'media-tag-item-xxxx' where 'xxx' is the attachment id.
-
-tags_compare: (Optional) Defaults to 'OR'. When requesting multiple media_tags elements allow a compare between the lists of items returned. When using the 'OR' option returned item will be in one or more of the requested media_tags values. Other value is 'AND'. When using 'AND' you are requesting only attachments which are in all requested media_tags. 
-
-Actual examples of the function call are:
-`
-	$media_items = get_attachments_by_media_tags('media_tags=banner');
-	This call will filter the tags for the tag 'banner'. 
-	
-	$media_items = get_attachments_by_media_tags('media_tags=sidebar,trees&media_types=pdf,xls&tags_compare=AND);
-	This is another example. Filtering media based on the tags sidebar and trees. Also filtering the media type to be pdf or xls only. We are also specifying the 'AND' compare option to only return elements that are part of all media_tags.
-
-	Note: in the earlier versions of the media tags plugin you had to call the function by way of the object like 
-	
-		$mediatags->get_media_by_tag(...);
-		
-	The use of the object as well as the 'get_media_by_tag' function has been deprecated. In the current version you can now access the function directly as in 'get_attachments_by_media_tags(...)'. The legacy $mediatags->get_media_by_tag() function is still supported for now. 
-`
-
-= I want to use the new shortcode feature to display attachments by media tag on a page =
-
-Great. The media tags plugin now support the use of shortcodes. In its simplest form the media tag shortcode appears like 
-
-	[media-tags media_tags="alt-views,page-full,thumb"]
-	
-Note you need to include quotes around the element value to ensure proper handling. The shortcode parameters available are pretty close to the direct function call. The media_tags parameter is the mediatag slug. The exception is you need to specify the parameter name and value pairs. 
-
-	[media-tags media_tags="alt-views,page-full,thumb" tags_compare="AND" orderby="menu_order"]
-
-When using the shortcode option the return type is automatically set the 'LI' which means list elements will be returned. When using shortcodes you can specific two parameters 'before_list=' and 'after_list=' to control the wrapper elements. Also, you can specify a new parameter 'display_item_callback='. This parameter will be a user defined function which allows you to control the output. The callback function will be called for each found element. Check the plugin file 'mediatags_shortcodes.php'. There is a function used 'default_item_callback()' which is the default callback actually used by the plugin. Remember when using shortcodes in WordPress you MUST return every output. Do not echo information.
-
-Lastly, when using the shortcode feature you may have a time when you need to specify the post_parent for the media_tags queried. Now you could add the post_parent ID directly to the shortcode settings. But then you would be hard-coding the ID for the given post. A better way is to just set the post_parent value to 'this'. This will allow dynamic control over the shortcode processing. 
-
-	[media-tags media_tags="alt-views,page-full,thumb" post_parent="this" before_list="<ul class='frank'>" after_list="</ul>"]
-
-Note as of version 2.1.3 of the plugin the 'media_tags' parameter must be the slug. To search by name use the new 'search_by=' parameter. As follows:
-
-	[media-tags media_tags="Italy" search_by="name" post_parent="this" before_list="<ul class='frank'>" after_list="</ul>"]
-
-= I want to display the media tags in my sidebar =
-
-You can use the new template function 'list_mediatags()'. This will provide a list of all media tags used in your system. Much like the WordPress list_tags() function. 
-
-There are many more template functions available. Check out the functions listed in the 'mediatags_template_functions.php'. 
-
-
-= I want to display listings of media tags like an archive. How can I do that? =
-
-The new version (2.x) now support the use of a new permalink structure for displaying media tags archives. This is automatic when you activate the plugin. A simple way to see this in actual is to add the template function 'list_mediatags()' to your sidebar. This will list all media tags in your system complete with clickable links. When you click on one of the links you will see the URL is something like:
-
-	http://www.yoursite.com/media-tags/<media tag slug>
-	
-By default the plugin will use the default WordPress templates in your theme directory. This means is you have a template file 'archive.php' it will be used to display the archive. If not then the 'index.php' template file will be used. Optionally, you can also use the new mediatags.php template file in your theme. This will let you control the display of media tags archives from other post archives. Also, you can create media tag specific template files like 'mediatag-xx.php' where 'xx' is the media tag ID. This follows similar convention for the built-in WordPress category template hierarchy. http://codex.wordpress.org/Category_Templates	
-
+The FAQ section has been written as a Help section within the plugin's settings panel. You will need to download and install the plugin to review this information.
 
 == Screenshots ==
 
-1. The Media Tags example via the Media popup from the Post editor screen. 
-2. The Media Tags displayed via the Media Management screen. 
-3. The Media Tags Management screen (new!)
+1. The Media Tags example via the Media > Library edit screen. Shows the added Media-Tags fields
+2. The Media-Tags Bulk Management popup via the Media > Library listing screen. (new in 3.0!)
+3. The Media Tags Management Roles Management screen (new in 3.0!)
+3. The Media-Tags Bulk Management panel via the media popup Gallery tab (new in 3.0!)
 
 == Changelog == 
+= 3.0 =
+2010-12-05
+
+* Added a Bulk Admin interface on the Media > Library page and the Media upload popup. This new bulk admin interface allows selection of multiple media items then assignment of Media-Tag terms to those items. 
+
+* Added a User Roles Management. This section allows you to selectively grant/deny permission for certain Media-Tags management actions.
+
+* New Help section. Provides help and information on many topics submitted as comments/question. 
+
+* Added some new template functions which allow more ways to access information about Media-Tag terms and items. 
+
+* Major code cleanup. Removed almost 1000 lines of previously custom code to handle the Term admin interface and rewrite rules. Now using many of the core functions provided by WordPress. 
+
+Thanks to email from Chris Webb who provided much of the original code to load the Show Common and Show Uncommon Media-Tags via AJAX. 
+
+Thanks to all who provided comments and voiced opinions on features to be added to Media-Tags. The plugin has become a very rich tool used by many. Your voices have been heard. I still have a long list of features to add in upcoming releases. Please be patient. 
+
 
 = 2.2.9.2 = 
 2010-07-17
@@ -165,7 +98,7 @@ Hopefully this makes Media-Tags place nicer with larger systems.
 
 * Bug fix: Better Init method. Thanks to Mike Schinkel for pointing out the error of my ways on this. Also for suggesting using the WP_DEBUG to make sure I have all the holes on the dike plugged. 
 
-* Bug fix: Erronious compare argument on the activate logic media_tags.php in the init function. Thanks to Tom for that note http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/#comment-48664
+* Bug fix: Erroneous compare argument on the activate logic media_tags.php in the init function. Thanks to Tom for that note http://www.codehooligans.com/2009/08/17/media-tags-2-2-plugin-for-wordpress-released/#comment-48664
 
 * Bug fix: Fixed some hard-coded table name prefixes. To all I apologize for this issue. For some reason early code I lifted from another plugin I didn't scan. In the mediatags_rewrite.php where the SQL WHERE is manipulated for matching the rewrite URL the queries had hard-coded prefixed as in 'wp_posts.', etc. This prevents the Media Tags plugin from working on non-standard database setup and also for WPMU. This should now be working. 
 

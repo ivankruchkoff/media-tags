@@ -1,207 +1,161 @@
 <?php
-
-function mediatags_init_rewrite()
+function mediatags_template_redirect() 
 {
-	global $wp_rewrite;
-
-	// Adding hooks for custom rewrite for '/media-tags/...'
-	if (isset($wp_rewrite) && $wp_rewrite->using_permalinks()) {
-		add_filter('rewrite_rules_array', 'mediatags_createRewriteRules');
-	}
-	if ((isset($_REQUEST['activate'])) && ($_REQUEST['activate'] == true))
-	{	
-		$wp_rewrite->flush_rules();
-	}
-}
-
-function mediatags_createRewriteRules($rules) {
-	global $wp_rewrite;
-
-	$mediatags_token = '%' . MEDIA_TAGS_QUERYVAR . '%';
-	$wp_rewrite->add_rewrite_tag($mediatags_token, '(.+)', MEDIA_TAGS_QUERYVAR . '=');
-
-	//without trailing slash
-	$mediatags_structure = $wp_rewrite->front . MEDIA_TAGS_URL . "/".$mediatags_token;	
-	$rewrite = $wp_rewrite->generate_rewrite_rules($mediatags_structure);
-
-	return ( $rewrite + $rules );
-}
-
-function mediatags_addQueryVar($wpvar_array) {
-	$wpvar_array[] = MEDIA_TAGS_QUERYVAR;
-	return($wpvar_array);
-}
-
-function mediatags_parseQuery() {
-	//if this is a series query, then reset other is_x flags and add template redirect;
+	global $wp_version;
 	
-	if (is_MEDIA_TAGS_URL()) {
-		global $wp_query;
-			
-		$wp_query->is_single = false;
-		$wp_query->is_page = false;
-		$wp_query->is_archive = false;
-		$wp_query->is_search = false;
-		$wp_query->is_home = false;
-		$wp_query->is_404 = false;
-
-		$wp_query->is_mediatags = true;
-
-		//echo "wp_query<pre>"; print_r($wp_query); echo "</pre>";
-
-		add_action('template_redirect', 'mediatags_includeTemplate');
-	}	
-	add_filter('posts_where', 'mediatags_postsWhere');
-	add_filter('posts_join', 'mediatags_postsJoin');
-}
-
-function is_MEDIA_TAGS_URL() { 
-	global $wp_version, $wp_query;
-
-	//echo "get_query_var=[".get_query_var(MEDIA_TAGS_QUERYVAR)."]<br />";
-	$MEDIA_TAGS_URL = ( isset($wp_version) 
-		&& ($wp_version >= 2.0) ) ? get_query_var(MEDIA_TAGS_QUERYVAR) : $GLOBALS[MEDIA_TAGS_QUERYVAR];
-
-	//$series = get_query_var(SERIES_QUERYVAR);
-	if ( (!is_null($MEDIA_TAGS_URL) && ($MEDIA_TAGS_URL != '')) || ((isset($wp_query->is_mediatags)) && ($wp_query->is_mediatags == true)) )
-		return true;
-	else
-		return false;
-}
-
-function mediatags_includeTemplate() {
-	if (is_MEDIA_TAGS_URL()) {
-		$template = '';
+	$template = '';
 					
-		$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
-		//echo "mediatag_var=[".$mediatag_var."]<br />";
+	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+//	echo __FUNCTION__ .": mediatag_var=[".$mediatag_var."]<br />";
 
-		$mediatag_feed_var = get_query_var('feed');
-		//echo "mediatag_feed_var=[".$mediatag_feed_var."]<br />";
+	$mediatag_feed_var = get_query_var('feed');
+//	echo __FUNCTION__ .": mediatag_feed_var=[".$mediatag_feed_var."]<br />";
 
-		if ($mediatag_var)
-		{	
+	if ($mediatag_var)
+	{	
+		if ($wp_version < "3.0")
+			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
-			if ($mediatag_term)
-			{					
-				if (($mediatag_feed_var == "rss")
- 				 || ($mediatag_feed_var == "rss2")
-				 || ($mediatag_feed_var == "feed"))
+		//echo "mediatag_term<pre>"; print_r($mediatag_term); echo "</pre>";
+		if ($mediatag_term)
+		{					
+			$mediatag_term = get_term( $mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY );
+			//echo "mediatag_term<pre>"; print_r($mediatag_term); echo "</pre>";
+			
+			if (($mediatag_feed_var == "rss")
+			 || ($mediatag_feed_var == "rss2")
+			 || ($mediatag_feed_var == "feed"))
+			{
+//				return;
+				
+				$fname_parts = pathinfo(MEDIA_TAGS_RSS_TEMPLATE);
+				if (strlen($fname_parts['filename']))
 				{
-					//load_template( ABSPATH . WPINC . '/feed-rss2.php' );					
-					//load_template( dirname(__FILE__) . "/mediatags_rss2.php");
+					// First check if these is a template to handle this in the user's theme folder. 
+					
+					// Check for term slug first. 
+					$template_filename = TEMPLATEPATH. "/" . 
+						$fname_parts['filename'] . "-". $mediatag_term->slug . 
+						".". $fname_parts['extension'];				
+					if ( file_exists($template_filename) )
+					{
+						load_template($template_filename);
+						exit;
+					}						
 
-					$fname_parts = pathinfo(MEDIA_TAGS_RSS_TEMPLATE);
-					if (strlen($fname_parts['filename']))
+					// Then check for term ID
+					$template_filename = TEMPLATEPATH. "/" . 
+						$fname_parts['filename'] . "-". $mediatag_term->term_id . 
+						".". $fname_parts['extension'];				
+					if ( file_exists($template_filename) )
 					{
-						$template_filename = TEMPLATEPATH. "/" . 
-							$fname_parts['filename'] . "-". $mediatag_term['term_id'] . 
-							".". $fname_parts['extension'];
+						load_template($template_filename);
+						exit;
+					}						
 					
-						if ( !file_exists($template_filename) )
-						{
-							$template_filename = "";
-							$plugindir_node = dirname(__FILE__);	
-							$template_filename = $plugindir_node ."/".MEDIA_TAGS_RSS_TEMPLATE;
-						}
+					// Then check for just mediatags_rss.php in the them folder
+					$template_filename = TEMPLATEPATH. "/" . 
+						$fname_parts['filename'] . ".". $fname_parts['extension'];				
+					if ( file_exists($template_filename) )
+					{
+						load_template($template_filename);
+						exit;
+					}						
+					
+					// IF none are used them return which will default to the WP term feed handling. 
+					// We no longer support the Media-Tags RSS template. Sorry. 
+/*
+					$template_filename = "";
+					$plugindir_node = dirname(__FILE__);	
+					$template_filename = $plugindir_node ."/".MEDIA_TAGS_RSS_TEMPLATE;
+					if ( file_exists($template_filename) )
+					{
+						load_template($template_filename);
+						exit;
 					}
-					//echo "template_filename[".$template_filename."]<br />";
-					//include($template_filename);
-					load_template($template_filename);
-					exit;
+*/
 				}
-				else
+			}
+			else
+			{
+				$fname_parts = pathinfo(MEDIA_TAGS_TEMPLATE);
+				if (strlen($fname_parts['filename']))
 				{
-					$fname_parts = pathinfo(MEDIA_TAGS_TEMPLATE);
-					if (strlen($fname_parts['filename']))
+					// First check if these is a template to handle this specific term in the user's theme folder.
+					$template_filename = TEMPLATEPATH. "/" . 
+						$fname_parts['filename'] . "-". $mediatag_term->slug . 
+						".". $fname_parts['extension'];
+					if ( file_exists($template_filename) )
 					{
-						$template_filename = TEMPLATEPATH. "/" . 
-							$fname_parts['filename'] . "-". $mediatag_term['term_id'] . 
-							".". $fname_parts['extension'];
-					
-						if ( !file_exists($template_filename) )
-							$template_filename = "";						
+						load_template($template_filename);
+						exit;						
 					}
+
+					$template_filename = TEMPLATEPATH. "/" . 
+						$fname_parts['filename'] . "-". $mediatag_term->term_id . 
+						".". $fname_parts['extension'];
+					if ( file_exists($template_filename) )
+					{
+						load_template($template_filename);
+						exit;						
+					}
+
+					// Else try the generic mediatag.php template.
+
+					$template_filename = TEMPLATEPATH ."/". $fname_parts['filename'] .".". $fname_parts['extension'];
+					if ( file_exists($template_filename) )
+					{
+						load_template($template_filename);
+						exit;						
+					}					
 				}
 			}
 		}
-		if (strlen($template_filename) == 0)
-			$template_filename = TEMPLATEPATH. "/" . MEDIA_TAGS_TEMPLATE;
-
-		if ( file_exists($template_filename) )
-			$template = $template_filename;
-		else
-			$template = get_archive_template();
-
-		if ($template) {
-			load_template($template);
-			exit;
-		}
 	}
+	// If here we didn't find any Media-Tags specific template. So let WP figure out where to display the content. 
 	return;
 }
 
-function mediatags_postsWhere($where) 
-{ 
-	global $wpdb;
-	
-	$whichmediatags	= "";
-	
-	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);	
-	if ($mediatags_var)
+// Used to limit the categories displayed on the home page. Simple
+function mediatags_pre_get_posts_filter($query) 
+{
+	if (
+		( (isset($query->query_vars['taxonomy'])) && ($query->query_vars['taxonomy'] == MEDIA_TAGS_QUERYVAR) )
+		|| (isset($query->query_vars[MEDIA_TAGS_QUERYVAR])) )
 	{
-		//is the term (media-tag value valid)?
-		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-		if ($media_tags_chk)
-		{
-			// Dear Wordpress. I hate parsing SQL. Find a better interface for this crap!
-			$where = str_replace("AND $wpdb->posts.post_type = 'post'", "AND $wpdb->posts.post_type = 'attachment'", $where);
-			$where = str_replace("($wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private')", 
-								"($wpdb->posts.post_status = 'inherit')", $where);
-			$where = str_replace("($wpdb->posts.post_status = 'publish')", 
-								"($wpdb->posts.post_status = 'inherit')", $where);
+		$query->set('post_type','attachment');
+		$query->set('post_status','inherit');
+		$query->set('is_mediatags','1');
 
-			$whichmediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
-			$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = ".$media_tags_chk['term_id'];
+		$mediatag_template_archive = get_option('mediatag_template_archive', 'yes'); 
+		if ($mediatag_template_archive == "yes")
+		{
+			add_filter( 'the_content', 						'mediatags_the_content_filter' );
+			add_filter( 'the_excerpt', 						'mediatags_the_content_filter' );
+
+			add_filter( 'the_content_rss', 						'mediatags_the_content_filter' );
+			add_filter( 'the_excerpt_rss', 						'mediatags_the_content_filter' );
+			
+			
 		}
 	}
-	else if (isset($_REQUEST['mediatag_id']))
-	{
-		$whichmediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
-		$whichmediatags .= " AND $wpdb->term_taxonomy.term_id = '".$_REQUEST['mediatag_id']."' ";		
-	}
-	$where .= $whichmediatags;
-	return $where;
+	return $query;
 }
 
-function mediatags_postsJoin($join) 
+function mediatags_the_content_filter($content)
 {
-	global $wpdb, $wp_version;
-
-	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);
-
-	// In WP 3.0 'is_term' was renamed to 'term_exists'
-	if ($wp_version < "3.0")
-		$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-	else
-		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-
-	if (($media_tags_chk) 
-	 || (isset($_REQUEST['mediatag_id'])))
-	{
-		$join = " INNER JOIN $wpdb->term_relationships 
-					ON ($wpdb->posts.ID = $wpdb->term_relationships.object_id) 
-					INNER JOIN $wpdb->term_taxonomy 
-					ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) ";
-	}
-	return $join;	
-}
-
-function mediatags_term_link($termlink, $term)
-{
-	if ($term->taxonomy == MEDIA_TAGS_TAXONOMY)
-		$termlink = get_mediatag_link($term->term_id);
+	global $post;
 	
-	return $termlink;
+	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	$is_image = wp_attachment_is_image();
+
+	if (($mediatag_var) && ($is_image == true)) 
+	{
+		$image_img_tag = wp_get_attachment_image( $post->ID, 'thumbnail' );
+		if ($image_img_tag)
+			$content .= '<a class="size-thumbnail" href="'. get_permalink($post->ID) .'">'. $image_img_tag .'</a>';
+	}
+	return $content;
 }
 ?>

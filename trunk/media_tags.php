@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 2.2.9.2
+Version: 3.0 Beta
 Author URI: http://www.codehooligans.com
 */
 
@@ -17,190 +17,108 @@ include_once ( dirname(__FILE__) . "/mediatags_settings.php");
 include_once ( dirname(__FILE__) . "/mediatags_thirdparty.php");
 include_once ( dirname(__FILE__) . "/mediatags_feed.php");
 include_once ( dirname(__FILE__) . "/mediatags_export_import.php");
+include_once ( dirname(__FILE__) . "/mediatags_bulk_admin.php");
 
 class MediaTags {
 
 	var $plugindir_url;
+	var $thirdparty;
+	var $default_caps;
+	var $plugin_version;
 	
 	function MediaTags()
 	{
 		global $wp_version;
 		
+		$this->plugin_version = MEDIA_TAGS_VERSION;
+
 		$plugindir_node 						= dirname(plugin_basename(__FILE__));	
 		$this->plugindir_url 					= get_bloginfo('wpurl') . "/wp-content/plugins/". $plugindir_node;
 	
-		add_filter('attachment_fields_to_edit', 'mediatags_show_fields_to_edit', 11, 2);
-		add_filter('attachment_fields_to_save', 'meditags_process_attachment_fields_to_save', 11, 2);
-		add_filter( 'manage_media_columns', 'mediatags_library_column_header' );
-		add_action( 'manage_media_custom_column', 'mediatags_library_column_row', 10, 2 );
+		// Setup flags for third-party plugins we can integrate with
+		$this->thirdparty->google_sitemap 		= false;
 
-		add_action('delete_attachment', 'mediatags_delete_attachment_proc');
-
-		add_action('admin_head', array(&$this,'admin_head_proc'));
-		add_action('wp_head', 'add_mediatags_alternate_link');
+		$this->default_caps						= array();
+		$this->default_caps['manage_terms'] 	= MEDIATAGS_MANAGE_TERMS_CAP;
+		$this->default_caps['edit_terms'] 		= MEDIATAGS_EDIT_TERMS_CAP;
+		$this->default_caps['delete_terms'] 	= MEDIATAGS_DELETE_TERMS_CAP;
+		$this->default_caps['assign_terms'] 	= MEDIATAGS_ASSIGN_TERMS_CAP;
 		
-		add_action( 'init', array(&$this, 'init') );
-		add_action( 'admin_init', array(&$this, 'admin_init') );
+		add_action( 'init', 							array(&$this, 'init') );		
+		add_action( 'admin_init', 						'mediatags_admin_init' );
+
+		register_activation_hook(__FILE__, array(&$this, 'mediatags_activate_plugin'));
+		//register_deactivation_hook( __FILE__, array(&$this, 'mediatags_deactivate_plugin') );
 		
-		add_filter('query_vars', 'mediatags_addQueryVar');
-		add_action('parse_query','mediatags_parseQuery');
-
-		add_filter('media_upload_tabs', 'mediatag_upload_tab');
-		add_action('media_upload_mediatags', 'media_upload_mediatags');
-
-		// Handle Export/Import interaction
-		add_action('export_wp', 'mediatags_wp_export_metadata');
-		add_action('import_post_meta', 'mediatags_wp_import_metadata', 10, 3);
-
-		// This MAY not be needed. This was a safety catch for the non-Permalink URLs.
-		add_filter('term_link', 'mediatags_term_link', 20, 2);
-
-		if (function_exists('add_shortcode'))
-			add_shortcode('media-tags', 'mediatags_shortcode_handler');
+		// Support for the Google Sitemap XML plugin
+		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');				
 
 		// Add our sub-panel to the Media section. But only if WP 2.7 or higher!
-		if ($wp_version >= "2.7")
+		// Not sure why this has to be here and not in admin_init. 
+		if (floatval($wp_version) >= "2.7")
 		{
 			add_action('admin_menu', 'mediatags_admin_panels');
 		}
-
-		// Support for the Google Sitemap XML plugin
-		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');				
 	}
 
 	function init() {
+
+		$plugin_dir = basename(dirname(__FILE__))."/lang";
+		load_plugin_textdomain( MEDIA_TAGS_I18N_DOMAIN, null, $plugin_dir );
 		
 		$this->register_taxonomy();
-		mediatags_init_rewrite();
-			
-		// Checks ths plugin version again the legacy data
-		if ((isset($_REQUEST['activate'])) && ($_REQUEST['activate'] == true))
-		{
-			$this->mediatags_activate_plugin();
-		}
+		add_filter( 'body_class', 						'mediatags_body_class' );
+		add_filter( 'pre_get_posts',					'mediatags_pre_get_posts_filter' );
+
+		add_action( 'wp_head', 							'mediatags_wp_head' );
 		
-		if ((isset($_REQUEST['page']))
-		 && ($_REQUEST['page'] == ADMIN_MENU_KEY))
-		{
-			mediatags_process_actions();
-		}				
+		add_shortcode( 'media-tags', 					'mediatags_shortcode_handler' );		
+		add_action( 'template_redirect', 				'mediatags_template_redirect' );	
 	}
 
-	function admin_init()
-	{
-		wp_enqueue_script('jquery-form'); 
-		if (function_exists('mediatags_settings_api_init'))
-			mediatags_settings_api_init();		
-	}
-		
 	function register_taxonomy() {
 		// Add new taxonomy, make it hierarchical (like categories)
 		  $labels = array(
-		    'name' => _x( 'Media-Tags', 'taxonomy general name' ),
-		    'singular_name' => _x( 'Media-Tag', 'taxonomy singular name' ),
-		    'search_items' =>  __( 'Search Media-Tags' ),
-		    'all_items' => __( 'All Media-Tags' ),
-		    'parent_item' => __( 'Parent Media-Tag' ),
-		    'parent_item_colon' => __( 'Parent Media-Tag:' ),
-		    'edit_item' => __( 'Edit Media-Tag' ), 
-		    'update_item' => __( 'Update Media-Tag' ),
-		    'add_new_item' => __( 'Add New Media-Tag' ),
-		    'new_item_name' => __( 'New Media-Tag Name' ),
+		    'name' 				=> _x( 'Media-Tags', 			'taxonomy general name', 		MEDIA_TAGS_I18N_DOMAIN ),
+		    'singular_name' 	=> _x( 'Media-Tag', 			'taxonomy singular name', 		MEDIA_TAGS_I18N_DOMAIN ),
+		    'search_items' 		=> _x( 'Search Media-Tags', 	'taxonomy search items', 		MEDIA_TAGS_I18N_DOMAIN ),
+			'popular_items' 	=> _x( 'Popular Media-Tags', 	'taxonomy popular item', 		MEDIA_TAGS_I18N_DOMAIN),		
+		    'all_items' 		=> _x( 'All Media-Tags', 		'taxonomy all items', 			MEDIA_TAGS_I18N_DOMAIN ),
+		    'parent_item' 		=> _x( 'Parent Media-Tag', 		'taxonomy parent item', 		MEDIA_TAGS_I18N_DOMAIN ),
+		    'parent_item_colon' => _x( 'Parent Media-Tag:', 	'taxonomy parent item colon', 	MEDIA_TAGS_I18N_DOMAIN ),
+		    'edit_item' 		=> _x( 'Edit Media-Tag', 		'taxonomy edit item', 			MEDIA_TAGS_I18N_DOMAIN ), 
+		    'update_item' 		=> _x( 'Update Media-Tag', 		'taxonomy update item', 		MEDIA_TAGS_I18N_DOMAIN ),
+		    'add_new_item' 		=> _x( 'Add New Media-Tag', 	'taxonomy add new item', 		MEDIA_TAGS_I18N_DOMAIN ),
+		    'new_item_name' 	=> _x( 'New Media-Tag Name', 	'taxonomy new item name', 		MEDIA_TAGS_I18N_DOMAIN ),
 		  );
 
-		register_taxonomy(MEDIA_TAGS_TAXONOMY,MEDIA_TAGS_TAXONOMY,array(
-		    'hierarchical' => false,
-		    'labels' => $labels,
-		    'query_var' => true,
-		    'rewrite' => array( 'slug' => 'MEDIA_TAGS_TAXONOMY' )
+		register_taxonomy(MEDIA_TAGS_TAXONOMY, MEDIA_TAGS_TAXONOMY, array(
+		    'hierarchical' 		=> false,
+		    'labels' 			=> $labels,
+			'show_ui' 			=> false,
+			'show_in_nav_menus'	=> true,
+			'show_tagcloud'		=> true,
+		    'query_var' 		=> true,
+		    'rewrite' 			=> array( 'slug' => MEDIA_TAGS_URL, 'with_front' => true ),
+			'capabilities' 		=> $this->default_caps
 		  ));
-
 	}
 
-	function admin_head_proc()
-	{
-		?>
-		<link rel="stylesheet" href="<?php echo $this->plugindir_url ?>/mediatags_style_admin.css" 
-			type="text/css" media="screen" />
-			
-		<?php if ((isset($_REQUEST['page']))
-		 	&& ($_REQUEST['page'] == ADMIN_MENU_KEY))
-		{	?><script type="text/javascript" src="<?php echo $this->plugindir_url ?>/mediatags_inline_edit.js"></script><?php }
-		
-		?>
-		<script type="text/javascript">
-		//<![CDATA[
-		jQuery(document).ready(function(){
-
-			jQuery('div#media-tags-list-used').show();
-			jQuery('div#media-tags-list-common').hide();
-			jQuery('div#media-tags-list-uncommon').hide();
-
-			jQuery("a#media-tags-show-hide-used").click(function () {
-				jQuery("div#media-tags-list-used").slideToggle('slow');
-				jQuery(this).text(jQuery(this).text() == 'Show Media Tags for this attachment' ? 'Media Tags for this attachment' : 'Show Media Tags for this attachment');
-				return false;
-			});
-
-			jQuery("a#media-tags-show-hide-common").click(function () {
-				jQuery("div#media-tags-list-common").slideToggle('slow');
-				jQuery(this).text(jQuery(this).text() == 'Show Common Media Tags' ? 'Hide Common Media Tags' : 'Show Common Media Tags');
-				return false;
-			});
-
-			jQuery("a#media-tags-show-hide-uncommon").click(function () {
-				jQuery("div#media-tags-list-uncommon").slideToggle('slow');
-				jQuery(this).text(jQuery(this).text() == 'Show Uncommon Media Tags' ? 'Hide Uncommon Media Tags' : 'Show Uncommon Media Tags');
-				return false;
-			});
-
-
-/*
-
-$("li").toggle(
-      function () {
-        $(this).css({"list-style-type":"disc", "color":"blue"});
-      },
-      function () {
-        $(this).css({"list-style-type":"disc", "color":"red"});
-      },
-      function () {
-        $(this).css({"list-style-type":"", "color":""});
-      }
-    );
-
-
-			jQuery('a#media-tags-show-hide-common').click(function () {	
-				jQuery('div#media-tags-list-common').toggle(
-					function () {
-						jQuery('a#media-tags-show-hide-common').text('Hide');
-						jQuery('div#media-tags-list-common').show();
-					},
-					function () {
-						jQuery('div#media-tags-list-common a').text('Show');
-						jQuery('div#media-tags-list-common').hide();
-					}
-				);
-				return false;
-			});
-			*/
-		});
-		//]]>
-		</script>
-		
-		<?php
-		
-	}
-		
 	function mediatags_activate_plugin()
 	{
 		// First see if we need to convert the data. This really only applied to pre-Taxonomy versions
 		include_once ( dirname (__FILE__) . '/mediatags_legacy_convert.php' );
 		mediatags_plugin_version_check();
 
-		mediatags_reconcile_counts();
+		// Support for Role Manager plugin http://www.im-web-gefunden.de/wordpress-plugins/role-manager/
+		mediatags_add_default_capabilities();
+		//mediatags_reconcile_counts();
 	}
 	
+	function mediatags_deactivate_plugin()
+	{
+		// Nothing to do really. 
+	}
 	
 	// Still support the original legacy version of the function. 
 	// Force use of the post_parent parameter. Users wanting to search globally across all media tags should
@@ -231,7 +149,7 @@ $("li").toggle(
 			'media_types' => null,
 			'numberposts' => '-1',
 			'orderby' => 'menu_order',			
-			'order' => 'DESC',
+			'order' => 'ASC',
 			'offset' => '0',
 			'post_type'	=> '',
 			'return_type' => '',
@@ -438,13 +356,3 @@ $("li").toggle(
 	}
 }
 $mediatags = new MediaTags();
-
-// Can't to the below. The init here effect the init function within the mediatags class. 
-/*
-add_action('init','init_media_tags');
-function init_media_tags() {
-	global $mediatags;
-	$mediatags = new MediaTags();
-}
-*/
-?>
