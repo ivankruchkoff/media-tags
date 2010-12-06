@@ -34,14 +34,9 @@ function mediatags_admin_init()
 		add_filter('media_upload_library', 'media_upload_gallery_tab', 10, 1);	// The Media Library Tab
 	}
 
-	// since there is no way to tell via the WP screen object, etc which page we are on we need to do something ugly, parse 
-	// the REQUEST_URI. Freaking ugly IMHO. Need a better way to do this.
-	$_REQUEST_URI = explode('?', $_SERVER['REQUEST_URI']);
-	
 	// If we are viewing the Media > Library page. This needs hooks to display the jQuery-UI popup for the Bulk admin
 	// if enabled via the Media-Tags > Settings page.
-	if (substr_compare($_REQUEST_URI[0], '/wp-admin/upload.php', strlen('/wp-admin/upload.php') * -1, 
-		strlen('/wp-admin/upload.php'), TRUE) == 0)
+	if (mediataga_check_url('wp-admin/upload.php'))		
 	{
 		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css', 
 			false, $mediatags->plugin_version);
@@ -71,8 +66,7 @@ function mediatags_admin_init()
 		}
 	}
 	// Else If we are viewing the Media popup via the Post/Page edito. if enabled via the Media-Tags > Settings page.
-	else if (substr_compare($_REQUEST_URI[0], '/wp-admin/media-upload.php', strlen('/wp-admin/media-upload.php') * -1, 
-		strlen('/wp-admin/media-upload.php'), TRUE) == 0)	
+	else if (mediataga_check_url('wp-admin/media-upload.php'))			
 	{		
 		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
 			false, $mediatags->plugin_version);
@@ -88,8 +82,7 @@ function mediatags_admin_init()
 				array('jquery'), $mediatags->plugin_version);			
 		}
 	}
-	else if (substr_compare($_REQUEST_URI[0], '/wp-admin/admin.php', strlen('/wp-admin/admin.php') * -1, 
-		strlen('/wp-admin/admin.php'), TRUE) == 0)
+	else if (mediataga_check_url('wp-admin/admin.php'))			
 	{
 		if ((isset($_GET['page'])) 
 			&& ( ($_GET['page'] == "mediatags_settings_panel") 
@@ -103,23 +96,21 @@ function mediatags_admin_init()
 				array('jquery'), $mediatags->plugin_version);			
 		}
 	}
-	else if (substr_compare($_REQUEST_URI[0], 'wp-admin/media.php', strlen('wp-admin/media.php') * -1, 
-		strlen('wp-admin/media.php'), TRUE) == 0)
+	else if (mediataga_check_url('wp-admin/media.php'))				
 	{
 		wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
 			false, $mediatags->plugin_version);
 		wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
 			array('jquery'), $mediatags->plugin_version);			
 	}
-	if (substr_compare($_REQUEST_URI[0], '/wp-admin/async-upload.php', strlen('/wp-admin/async-upload.php') * -1, 
-		strlen('/wp-admin/async-upload.php'), TRUE) == 0)
-	{
 
+//	if (mediataga_check_url('wp-admin/async-upload.php'))		
+//	{
 		//wp_enqueue_style( 'mediatags-stylesheet', $mediatags->plugindir_url .'/css/mediatags_style_admin.css',
 		//	false, $mediatags->plugin_version);
 		//wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
 		//	array('jquery'), $mediatags->plugin_version);			
-	}
+//	}
 
 	if (function_exists('mediatags_settings_api_init'))
 		mediatags_settings_api_init();
@@ -139,6 +130,21 @@ function mediatags_admin_init()
 		add_filter( 'manage_edit-media-tags_sortable_columns', 'mediatags_admin_terms_sort_columns' );
 		add_filter( 'get_terms_args', 'mediatags_admin_terms_args_filter', 10, 2);
 	}
+}
+
+function mediataga_check_url($url='')
+{
+	if (!$url) return;
+	
+	$_REQUEST_URI = explode('?', $_SERVER['REQUEST_URI']);
+	$url_len 	= strlen($url);
+	$url_offset = $url_len * -1;
+
+	// If out test string ($url) is longer than the page URL. skip
+	if (strlen($_REQUEST_URI[0]) < $url_len) return;
+
+	if ($url == substr($_REQUEST_URI[0], $url_offset, $url_len))
+			return true;
 }
 
 // New for WP 3.1 - Adds out Bulk action item to the Bulk admin dropdown
