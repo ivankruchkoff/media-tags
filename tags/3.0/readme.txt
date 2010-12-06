@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, attachments, tags, media, shortcode, permalinks, taxonomy, role management, bulk admin
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 3.0
+Stable tag: 3.0.2
 
 == Description ==
 
