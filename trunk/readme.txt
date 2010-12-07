@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: images, attachments, tags, media, shortcode, permalinks, taxonomy, role management, bulk admin
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 
 == Description ==
 
@@ -53,6 +53,14 @@ The FAQ section has been written as a Help section within the plugin's settings 
 3. The Media-Tags Bulk Management panel via the media popup Gallery tab (new in 3.0!)
 
 == Changelog == 
+= 3.0.2 =
+2010-12-07
+* More bug fixed on 'substr_compare' related code causing PHP Warning messages. 
+
+= 3.0.1 =
+2010-12-06
+* Bug fixed on 'substr_compare' related code causing PHP Warning messages. 
+
 = 3.0 =
 2010-12-05
 

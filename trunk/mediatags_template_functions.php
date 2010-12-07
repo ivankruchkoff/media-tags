@@ -1,9 +1,7 @@
 <?php
 function is_mediatag()
 {
-	global $wp_query;
-	
-	if ($wp_query->is_mediatags == true)
+	if ($is_mediatags = get_query_var('is_mediatags'))
 		return true;
 	else
 		return false;
@@ -11,12 +9,14 @@ function is_mediatag()
 
 function in_mediatag($mediatag_id = '')
 {
+	global $wp_version;
+	
 	if (!$mediatag_id) return;
 	
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var)
 	{	
-		if ($wp_version < "3.0")
+		if (floatval($wp_version) < "3.0")
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -130,9 +130,11 @@ function get_attachments_by_media_tags($args='')
 
 function single_mediatag_title()
 {
+	global $wp_version; 
+	
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var) {	
-		if ($wp_version < "3.0")
+		if (floatval($wp_version) < "3.0")
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -173,7 +175,7 @@ function mediatags_body_class($classes, $class='' )
 		$classes[] = 'media-tags-archive';
 		$classes[] = 'media-tags-slug-'. $mediatag_var;
 
-		if ($wp_version < "3.0")
+		if (floatval($wp_version) < "3.0")
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );

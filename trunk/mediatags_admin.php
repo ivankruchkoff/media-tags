@@ -388,9 +388,7 @@ function mediatags_show_fields_to_edit($form_fields, $post)
 {		
 	if (current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP ))
 	{
-		$_REQUEST_URI = explode('?', $_SERVER['REQUEST_URI']);		
-		if (substr_compare($_REQUEST_URI[0], '/wp-admin/async-upload.php', strlen('/wp-admin/async-upload.php') * -1, 
-			strlen('/wp-admin/async-upload.php'), TRUE) == 0)
+		if (mediataga_check_url('/wp-admin/async-upload.php'))		
 			$post_media_tags_fields = mediatags_get_fields($post->ID, true);
 		else
 			$post_media_tags_fields = mediatags_get_fields($post->ID, false);

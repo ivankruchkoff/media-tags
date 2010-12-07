@@ -13,7 +13,7 @@ function mediatags_template_redirect()
 
 	if ($mediatag_var)
 	{	
-		if ($wp_version < "3.0")
+		if (floatval($wp_version) < "3.0")		
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -27,8 +27,6 @@ function mediatags_template_redirect()
 			 || ($mediatag_feed_var == "rss2")
 			 || ($mediatag_feed_var == "feed"))
 			{
-//				return;
-				
 				$fname_parts = pathinfo(MEDIA_TAGS_RSS_TEMPLATE);
 				if (strlen($fname_parts['filename']))
 				{
@@ -56,7 +54,7 @@ function mediatags_template_redirect()
 					
 					// Then check for just mediatags_rss.php in the them folder
 					$template_filename = TEMPLATEPATH. "/" . 
-						$fname_parts['filename'] . ".". $fname_parts['extension'];				
+						$fname_parts['filename'] .".". $fname_parts['extension'];				
 					if ( file_exists($template_filename) )
 					{
 						load_template($template_filename);
@@ -134,10 +132,8 @@ function mediatags_pre_get_posts_filter($query)
 			add_filter( 'the_content', 						'mediatags_the_content_filter' );
 			add_filter( 'the_excerpt', 						'mediatags_the_content_filter' );
 
-			add_filter( 'the_content_rss', 						'mediatags_the_content_filter' );
-			add_filter( 'the_excerpt_rss', 						'mediatags_the_content_filter' );
-			
-			
+			add_filter( 'the_content_rss', 					'mediatags_the_content_filter' );
+			add_filter( 'the_excerpt_rss', 					'mediatags_the_content_filter' );
 		}
 	}
 	return $query;
