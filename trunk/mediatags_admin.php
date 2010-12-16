@@ -59,7 +59,7 @@ function mediatags_admin_init()
 			wp_enqueue_script('mediatags', $mediatags->plugindir_url .'/js/mediatags.js',
 				array('jquery'), $mediatags->plugin_version);
 
-			if (floatval($wp_version) >= "3.1")
+		    if ( version_compare( $wp_version, '3.0.999', '>' ) )
 			{
 				add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
 			}							
@@ -122,7 +122,7 @@ function mediatags_admin_init()
 	add_action( 'manage_media_custom_column', 		'mediatags_library_column_row', 10, 2 );
 	add_filter( 'manage_media-tags_custom_column', 	'mediatags_terms_column_row', 10, 3 );
 
-	if (floatval($wp_version) >= "3.1")
+    if ( version_compare( $wp_version, '3.0.999', '>' ) )
 	{
 		//add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
 
@@ -186,10 +186,10 @@ function mediatags_admin_footer()
 	{
 		global $current_screen;			
 	}
+	//echo "current_screen<pre>"; print_r($current_screen); echo "</pre>";
 
 	if ((isset($current_screen->id)) 
-	 && (($current_screen->id == "upload") || ($current_screen->id == "media-upload")) 
-	 &&  ( current_user_can( MEDIATAGS_ASSIGN_TERMS_CAP )) )
+	 && (($current_screen->id == "upload") || ($current_screen->id == "media-upload")) )
 	{
 		$mediatag_admin_bulk_library = get_option('mediatag_admin_bulk_library', 'yes'); 
 		$mediatag_admin_bulk_inline = get_option('mediatag_admin_bulk_inline', 'yes'); 
@@ -204,7 +204,7 @@ function mediatags_admin_footer()
 			show_mediataga_admin_buttons_text();
 
 			// In WP 3.1 we can use a hook to add items to the bulk action dropdown. Prior to 3.1 we do this via jQuery.
-			if (floatval($wp_version) < "3.1")
+		    if ( version_compare( $wp_version, '3.0.999', '<' ) )
 			{
 				?>
 				<script type='text/javascript'>
@@ -213,10 +213,79 @@ function mediatags_admin_footer()
 						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
 					jQuery('form#posts-filter select[name=action2]').append('<option value="media-tags"><?php 
 						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
+						
+					jQuery('select#media-tags').change(function(){
+						var media_tags_filter = jQuery(this).val();
+						if (media_tags_filter !== "")
+						{
+							//alert('media_tags_filter=['+media_tags_filter+']');
+							if (jQuery('form.search-form input#media-tags-search').length)
+							{
+								jQuery('form.search-form input#media-tags-search').val(media_tags_filter);
+							}
+							else
+							{
+								jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="'+media_tags_filter+'"/>');
+								
+							}
+						}
+						else
+						{
+							jQuery('form.search-form input#media-tags-search').remove();	
+						}
+					});
+						
+					<?php
+						if ((isset($_GET['media-tags'])) && (strlen($_GET['media-tags'])))
+						{
+							?>
+							jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
+							<?php
+						}
+					?>	
 				});
 				</script>
 				<?php
-			}			
+			}
+			else if ( version_compare( $wp_version, '3.0.999', '>' ) )
+			{
+				?>
+				<script type='text/javascript'>				
+					jQuery(document).ready(function() {
+				
+						jQuery('select#media-tags').change(function(){
+							var media_tags_filter = jQuery(this).val();
+							if (media_tags_filter !== "")
+							{
+								//alert('media_tags_filter=['+media_tags_filter+']');
+								if (jQuery('form#posts-filter input#media-tags-search').length)
+								{
+									jQuery('form#posts-filter input#media-tags-search').val(media_tags_filter);
+								}
+								else
+								{
+									jQuery('form#posts-filter').append('<input type="hidden" id="media-tags-search" name="media-tags" value="'+media_tags_filter+'"/>');
+							
+								}
+							}
+							else
+							{
+								jQuery('form# input#media-tags-search').remove();	
+							}
+						});
+					
+						<?php
+							if ((isset($_REQUEST['media-tags'])) && (strlen($_REQUEST['media-tags'])))
+							{
+								?>
+								jQuery('form#posts-filter').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
+								<?php
+							}
+						?>	
+					});
+				</script>
+				<?php
+			}		    			
 		}
 	}
 }	

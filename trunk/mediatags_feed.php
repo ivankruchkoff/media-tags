@@ -13,7 +13,7 @@ function add_mediatags_alternate_link()
 	//echo "mediatag_var<pre>"; print_r($mediatag_var); echo "</pre>";
 	if ($mediatag_var)
 	{	
-		if (floatval($wp_version) < "3.0")
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );

@@ -265,9 +265,7 @@ function mediatags_roles_panel()
 
 //			if ($current_user->has_cap('edit_users'))
 			{
-				if (floatval($wp_version) >= "3.1")
-					$users = get_users();					
-				else
+				if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
 				{
 					$users = array();
 
@@ -280,6 +278,8 @@ function mediatags_roles_panel()
 						}
 					}				
 				}
+				else
+					$users = get_users();					
 				
 				if ($users)
 				{
@@ -323,9 +323,7 @@ function mediatags_roles_panel()
 				$user_roles_array[$role_label]['users'] = array();
 			}
 
-			if (floatval($wp_version) >= "3.1")
-				$users = get_users();					
-			else
+			if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
 			{
 				$users = array();
 				$user_ids = get_editable_user_ids($current_user_id);
@@ -337,6 +335,9 @@ function mediatags_roles_panel()
 					}
 				}				
 			}
+			else
+				$users = get_users();					
+
 			if ($users)
 			{				
 				foreach($users as $user_id => $user)

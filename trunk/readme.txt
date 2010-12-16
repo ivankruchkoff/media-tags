@@ -1,10 +1,10 @@
 === Media Tags ===
 Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
-Tags: images, attachments, tags, media, shortcode, permalinks, taxonomy, role management, bulk admin
+Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 3.0.2
+Stable tag: 3.0.3
 
 == Description ==
 
@@ -53,6 +53,19 @@ The FAQ section has been written as a Help section within the plugin's settings 
 3. The Media-Tags Bulk Management panel via the media popup Gallery tab (new in 3.0!)
 
 == Changelog == 
+
+= 3.0.3 =
+2010-12-16
+* Fixed code to allow searches within a media-tags term. For example your side http://www.somesite.com/media-tags/flags?s=xxx would return results from all media-tags terms not just within the 'flags' term. So had to add back in some of the filters for the Where and Join of the query (yuk!). The search is applied in default WordPress fashion to the attachment title an description fields. Will try to include the alt text and caption field in some later release. 
+
+Thanks to Carlos for commenting on my blog and bringing this to my attention. You can read the thread of comments here.  http://www.codehooligans.com/projects/wordpress/media-tags/#comment-71043
+
+* Corrected an issue with the compare of the global 'wp_version'. Was using the PHP function floatval but this return inaccurate value when the version is something like '3.0.x'. Now using the PHP function version_compare. 
+
+* Within in the Media > Library enabled search to filter listing by Media-Tags. Select the Media-Tag term from the dropdown. Then enter something into the search and submit. 
+
+* No other known bugs at this time. 
+
 = 3.0.2 =
 2010-12-07
 * More bug fixed on 'substr_compare' related code causing PHP Warning messages. 

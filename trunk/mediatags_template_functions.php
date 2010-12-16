@@ -16,7 +16,7 @@ function in_mediatag($mediatag_id = '')
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var)
 	{	
-		if (floatval($wp_version) < "3.0")
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -134,7 +134,7 @@ function single_mediatag_title()
 	
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var) {	
-		if (floatval($wp_version) < "3.0")
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -175,7 +175,7 @@ function mediatags_body_class($classes, $class='' )
 		$classes[] = 'media-tags-archive';
 		$classes[] = 'media-tags-slug-'. $mediatag_var;
 
-		if (floatval($wp_version) < "3.0")
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );

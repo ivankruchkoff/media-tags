@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 3.0.2
+Version: 3.0.3
 Author URI: http://www.codehooligans.com
 */
 
@@ -55,7 +55,7 @@ class MediaTags {
 
 		// Add our sub-panel to the Media section. But only if WP 2.7 or higher!
 		// Not sure why this has to be here and not in admin_init. 
-		if (floatval($wp_version) >= "2.7")
+	    if ( version_compare( $wp_version, '2.7', '>=' ) )
 		{
 			add_action('admin_menu', 'mediatags_admin_panels');
 		}

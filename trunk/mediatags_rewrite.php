@@ -13,7 +13,7 @@ function mediatags_template_redirect()
 
 	if ($mediatag_var)
 	{	
-		if (floatval($wp_version) < "3.0")		
+		if ( version_compare( $wp_version, '3.0', '<' ) )
 			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		else
 			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
@@ -118,10 +118,23 @@ function mediatags_template_redirect()
 // Used to limit the categories displayed on the home page. Simple
 function mediatags_pre_get_posts_filter($query) 
 {
+	global $wp_version;
+	
+	if (function_exists('get_current_screen'))
+		$current_screen = get_current_screen();
+	else
+	{
+		global $current_screen;			
+	}
+	//echo "current_screen<pre>"; print_r($current_screen); echo "</pre>";
+		
 	if (
 		( (isset($query->query_vars['taxonomy'])) && ($query->query_vars['taxonomy'] == MEDIA_TAGS_QUERYVAR) )
 		|| (isset($query->query_vars[MEDIA_TAGS_QUERYVAR])) )
 	{
+		//	echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
+		//	echo __FUNCTION__ ." query<pre>"; print_r($query); echo "</pre>";
+
 		$query->set('post_type','attachment');
 		$query->set('post_status','inherit');
 		$query->set('is_mediatags','1');
@@ -135,8 +148,78 @@ function mediatags_pre_get_posts_filter($query)
 			add_filter( 'the_content_rss', 					'mediatags_the_content_filter' );
 			add_filter( 'the_excerpt_rss', 					'mediatags_the_content_filter' );
 		}
+		if (($query->is_search) && (version_compare($wp_version, "3.0.999", "<")))
+		{
+//			echo "setting JOIN/WHERE Filters<br />";
+			add_filter('posts_join', 'mediatags_postsJoin', 10, 2);
+			add_filter('posts_where', 'mediatags_postsWhere', 10, 2);			
+		}
+		
 	}
 	return $query;
+}
+
+function mediatags_postsWhere($where, $query) 
+{ 
+	global $wpdb, $wp_version;
+		
+	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);	
+	if ($mediatags_var)
+	{
+//		echo __FUNCTION__ .": mediatags_var=[".$mediatags_var."]<br />";
+
+		// In WP 3.0 'is_term' was renamed to 'term_exists'
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
+			$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		else
+			$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+
+//		echo __FUNCTION__ .": media_tags_chk<pre>"; print_r($media_tags_chk); echo "</pre>";
+//		echo __FUNCTION__ ."is_search=[".$query->is_search."]<br />";
+		
+		if (($media_tags_chk) && ($query->is_search))
+		{
+			$where_mediatags	= "";
+			$where_mediatags .= " AND $wpdb->term_taxonomy.taxonomy = '".MEDIA_TAGS_TAXONOMY."'";
+			$where_mediatags .= " AND $wpdb->term_taxonomy.term_id = ".$media_tags_chk['term_id'];
+			
+			$where .= $where_mediatags;
+//			echo "where=[".$where."]<br />";
+		}
+	}
+	return $where;
+}
+
+
+function mediatags_postsJoin($join, $query) 
+{
+	global $wpdb, $wp_version;
+
+	$mediatags_var = get_query_var(MEDIA_TAGS_QUERYVAR);
+	if ($mediatags_var)
+	{
+//		echo __FUNCTION__ .": mediatags_var=[".$mediatags_var."]<br />";
+		
+		// In WP 3.0 'is_term' was renamed to 'term_exists'
+	    if ( version_compare( $wp_version, '3.0', '<' ) )
+			$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		else
+			$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+
+//		echo __FUNCTION__ .": media_tags_chk<pre>"; print_r($media_tags_chk); echo "</pre>";
+//		echo __FUNCTION__ ."is_search=[".$query->is_search."]<br />";
+
+		if (($media_tags_chk) && ($query->is_search))
+		{
+			$mediatags_join = " INNER JOIN $wpdb->term_relationships 
+						ON ($wpdb->posts.ID = $wpdb->term_relationships.object_id) 
+						INNER JOIN $wpdb->term_taxonomy 
+						ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) ";
+			$join .= $mediatags_join;
+//			echo "join=[".$join."]<br />";
+		}
+	}
+	return $join;	
 }
 
 function mediatags_the_content_filter($content)
