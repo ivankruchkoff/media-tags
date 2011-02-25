@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 3.0.3
+Version: 3.0.4
 Author URI: http://www.codehooligans.com
 */
 
@@ -33,7 +33,10 @@ class MediaTags {
 		$this->plugin_version = MEDIA_TAGS_VERSION;
 
 		$plugindir_node 						= dirname(plugin_basename(__FILE__));	
-		$this->plugindir_url 					= get_bloginfo('wpurl') . "/wp-content/plugins/". $plugindir_node;
+		//$this->plugindir_url 					= get_bloginfo('wpurl') . "/wp-content/plugins/". $plugindir_node;
+		$this->plugindir_url 					= WP_CONTENT_URL . "/plugins/". $plugindir_node;
+		
+		
 	
 		// Setup flags for third-party plugins we can integrate with
 		$this->thirdparty->google_sitemap 		= false;
@@ -78,6 +81,8 @@ class MediaTags {
 
 	function register_taxonomy() {
 		// Add new taxonomy, make it hierarchical (like categories)
+/*
+		$labels = mediatags_get_taxonomy_labels();
 		  $labels = array(
 		    'name' 				=> _x( 'Media-Tags', 			'taxonomy general name', 		MEDIA_TAGS_I18N_DOMAIN ),
 		    'singular_name' 	=> _x( 'Media-Tag', 			'taxonomy singular name', 		MEDIA_TAGS_I18N_DOMAIN ),
@@ -91,6 +96,9 @@ class MediaTags {
 		    'add_new_item' 		=> _x( 'Add New Media-Tag', 	'taxonomy add new item', 		MEDIA_TAGS_I18N_DOMAIN ),
 		    'new_item_name' 	=> _x( 'New Media-Tag Name', 	'taxonomy new item name', 		MEDIA_TAGS_I18N_DOMAIN ),
 		  );
+*/
+		$labels = mediatags_get_taxonomy_labels();
+	
 
 		register_taxonomy(MEDIA_TAGS_TAXONOMY, MEDIA_TAGS_TAXONOMY, array(
 		    'hierarchical' 		=> false,

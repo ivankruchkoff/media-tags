@@ -21,12 +21,19 @@ function media_tags_bulk_action_callback() {
 		$select_media_items = explode(",", $_REQUEST['select_media_items']);
 	else
 		$select_media_items = array();
+
+
+	//echo "media_tags_action=[". $media_tags_action ."]<br />";
+	//echo "media_tags_input=[". $media_tags_input ."]<br />";
+	//echo "select_media_tags<pre>"; print_r($select_media_tags); echo "</pre>";
+	//echo "select_media_items<pre>"; print_r($select_media_items); echo "</pre>";
 	
+	//mediatag_process_admin_forms($media_tags_action, $select_media_items, $select_media_tags, $media_tags_input);
 	
 	// First process any new Tags entered via the input field...
-	if ((strlen($_REQUEST['media_tags_input'])) && ($media_tags_action == "assign"))
+	if ((strlen($media_tags_input)) && ($media_tags_action == "media_tags_assign"))
 	{
-		$tags_tmp_array = split(',', $_REQUEST['media_tags_input']);
+		$tags_tmp_array = split(',', $media_tags_input);
 		if ($tags_tmp_array)
 		{
 			foreach($tags_tmp_array as $idx => $tag_val)
@@ -35,6 +42,9 @@ function media_tags_bulk_action_callback() {
 
 				if ( ! ($id = term_exists( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
 				{
+					//echo "id<pre>"; print_r($id); echo "</pre>";
+					//echo "tag_val=[". $tag_val."]<br />";
+					//echo "tag_slug=[". $tag_slug."]<br />";
 					$inserted_term_id = wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
 					if (isset($inserted_term_id['term_id']))
 						$select_media_tags[] = $inserted_term_id['term_id'];
@@ -47,10 +57,6 @@ function media_tags_bulk_action_callback() {
 		
 	if ( (strlen($media_tags_action)) && (count($select_media_items)) && (count($select_media_tags)) )
 	{
-		//echo "media_tags_action=[".$media_tags_action."]<br />\n";
-		//echo "select_media_tags<pre>"; print_r($select_media_tags); echo "</pre>\n";
-		//echo "select_media_items<pre>"; print_r($select_media_items); echo "</pre>\n";
-		
 		$selected_media_tag_terms = array();
 		//$selected_media_tag_terms = get_terms(MEDIA_TAGS_TAXONOMY, array('include' => $select_media_tags));
 		foreach($select_media_tags as $media_tag_id)
@@ -59,7 +65,7 @@ function media_tags_bulk_action_callback() {
 		}
 		//echo "selected_media_tag_terms<pre>"; print_r($selected_media_tag_terms); echo "</pre>\n";
 		
-		if ($media_tags_action == "assign")
+		if ($media_tags_action == "media_tags_assign")
 		{
 			foreach($select_media_items as $select_media_item_id)
 			{
@@ -90,7 +96,7 @@ function media_tags_bulk_action_callback() {
 				}
 			}
 		}
-		else if ($media_tags_action == "remove")
+		else if ($media_tags_action == "media_tags_assign")
 		{
 			foreach($select_media_items as $select_media_item_id)
 			{
@@ -117,6 +123,7 @@ function media_tags_bulk_action_callback() {
 			}			
 		}
 	}	
+
 	die();
 }
 
@@ -133,9 +140,9 @@ function mediatags_bulk_admin_panel()
 			<p><?php _e('Number of Media Items Selected: ', MEDIA_TAGS_I18N_DOMAIN); ?><span id="media-items-count"></span></p>
 		</div>
 		<div id="media-tag-action-container">
-			<input type="radio" name="media_tags_action" id="media_tags_action_assign" checked="checked" value="assign">&nbsp;
+			<input type="radio" name="media_tags_action" id="media_tags_action_assign" value="media_tags_assign">&nbsp;
 			<label for="media_tags_action_assign"><?php _e('Assign Selected items to...', MEDIA_TAGS_I18N_DOMAIN); ?></label><br />
-			<input type="radio" name="media_tags_action" id="media_tags_action_remove" value="remove">&nbsp;
+			<input type="radio" name="media_tags_action" id="media_tags_action_remove" value="media_tags_remove">&nbsp;
 			<label for="media_tags_action_remove"><?php _e('Remove Selected items from...', MEDIA_TAGS_I18N_DOMAIN); ?></label><br />
 		</div>
 		<div id="mediatag-new-input-container">

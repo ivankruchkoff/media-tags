@@ -73,6 +73,12 @@ function mediatags_settings_panel()
 	{
 		$update_message = "";
 		//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
+
+		if (isset($_REQUEST['mediatag_labels']))
+		{
+			update_option('mediatags_labels', $_REQUEST['mediatag_labels']);
+		}
+
 		if (isset($_REQUEST['mediatag_admin_bulk_library']))
 		{
 			if (strtolower($_REQUEST['mediatag_admin_bulk_library']) == strtolower("yes"))
@@ -105,8 +111,6 @@ function mediatags_settings_panel()
 			update_option( 'mediatag_template_archive', $mediatag_template_archive );
 			$update_message = "Media-Tags Settings have been updated.";
 		}
-
-
 
 		if (isset($_REQUEST['mediatag_rss_feed']))
 		{
@@ -230,6 +234,37 @@ function mediatags_settings_panel()
 						<?php mediatag_settings_boxfooter(false); ?>
 
 
+						<?php 
+							$mediatag_labels = mediatags_get_taxonomy_labels();
+							$mediatag_labels_legend = array(
+								'name' => ' Used to control the label used on the HTML Title for Archives.'
+							);
+							
+						?>
+						<?php mediatag_settings_boxheader('mediatag-settings-labels', 
+								__('Media-Tags Labels', MEDIA_TAGS_I18N_DOMAIN)); ?>
+						<p><?php _e('This settings section lets you override some of the labels used. Most of these labels are used on the <a href="edit-tags.php?taxonomy=media-tags">Media-Tags</a> management page.',
+						 	MEDIA_TAGS_I18N_DOMAIN); ?></p>
+
+						<?php
+							foreach($mediatag_labels as $label_key => $label_val)
+							{
+								$label_display = ucwords(strtolower(str_replace('_', ' ', $label_key)));
+								?>
+								<label for="mediatag_label_<?php echo $label_key; ?>"><?php echo $label_display; ?><?php
+									if (isset($mediatag_labels_legend[$label_key]))
+									{ echo ': '. $mediatag_labels_legend[$label_key]; }
+								?></label><br />
+								<input id="mediatag_label_<?php echo $label_key; ?>" 
+									name="mediatag_labels[<?php echo $label_key; ?>]" value="<?php echo $label_val; ?>" /><br /><br />
+								<?php
+							}
+						?>
+						<p><?php _e('Please refer to the WordPress Codex page for <a target="_blank" href="http://codex.wordpress.org/Function_Reference/register_taxonomy">register_taxonomy</a> for full descriptions f the labels and how they are used.'); ?></p>
+						<?php mediatag_settings_boxfooter(false); ?>
+
+
+
 					</div>
 				</div>
 			</div>
@@ -265,8 +300,8 @@ function mediatags_roles_panel()
 
 //			if ($current_user->has_cap('edit_users'))
 			{
-				if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
-				{
+//				if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
+//				{
 					$users = array();
 
 					$user_ids = get_editable_user_ids($current_user_id);
@@ -277,9 +312,9 @@ function mediatags_roles_panel()
 							$users[$user_id] = new WP_User( $user_id );
 						}
 					}				
-				}
-				else
-					$users = get_users();					
+//				}
+//				else
+//					$users = get_users();					
 				
 				if ($users)
 				{
@@ -323,8 +358,8 @@ function mediatags_roles_panel()
 				$user_roles_array[$role_label]['users'] = array();
 			}
 
-			if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
-			{
+//			if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
+//			{
 				$users = array();
 				$user_ids = get_editable_user_ids($current_user_id);
 				if ($user_ids)
@@ -334,9 +369,9 @@ function mediatags_roles_panel()
 						$users[$user_id] = new WP_User( $user_id );
 					}
 				}				
-			}
-			else
-				$users = get_users();					
+//			}
+//			else
+//				$users = get_users();					
 
 			if ($users)
 			{				

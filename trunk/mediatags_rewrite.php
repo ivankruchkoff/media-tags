@@ -148,13 +148,12 @@ function mediatags_pre_get_posts_filter($query)
 			add_filter( 'the_content_rss', 					'mediatags_the_content_filter' );
 			add_filter( 'the_excerpt_rss', 					'mediatags_the_content_filter' );
 		}
-		if (($query->is_search) && (version_compare($wp_version, "3.0.999", "<")))
-		{
+//		if (($query->is_search)) // && (version_compare($wp_version, "3.0.999", "<")))
+//		{
 //			echo "setting JOIN/WHERE Filters<br />";
-			add_filter('posts_join', 'mediatags_postsJoin', 10, 2);
-			add_filter('posts_where', 'mediatags_postsWhere', 10, 2);			
-		}
-		
+//			add_filter('posts_join', 'mediatags_postsJoin', 10, 2);
+//			add_filter('posts_where', 'mediatags_postsWhere', 10, 2);			
+//		}		
 	}
 	return $query;
 }

@@ -59,7 +59,12 @@ jQuery(document).ready(function(){
 		button_name = "";
 		button_name = jQuery('#media-tags-bulk-content-buttons .cancel').text();
 		if (button_name != "")
-			dialog_buttons[button_name] = function() { jQuery(this).dialog("close"); return false; }
+			dialog_buttons[button_name] = function() { 
+				jQuery('#media-tags-bulk-panel input[@name=media_tags_input]:checked').attr('checked', '');
+				
+				jQuery(this).dialog("close"); 
+				return false; 
+			}
 		
 		jQuery("#media-tags-bulk-panel").dialog({
 			autoOpen: false,
@@ -68,6 +73,8 @@ jQuery(document).ready(function(){
 			resizable: true,
 			buttons: dialog_buttons
 		});
+		jQuery('#media-tags-bulk-panel input#media_tags_action_assign').attr('checked', 'checked');
+		
 		jQuery("#media-tags-bulk-panel").dialog('open');		
 	}
 

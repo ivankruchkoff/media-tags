@@ -2,9 +2,9 @@
 Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
-Requires at least: 3.0
+Requires at least: 3.0.1
 Tested up to: 3.1
-Stable tag: 3.0.3
+Stable tag: 3.0.4
 
 == Description ==
 
@@ -65,6 +65,25 @@ Thanks to Carlos for commenting on my blog and bringing this to my attention. Yo
 * Within in the Media > Library enabled search to filter listing by Media-Tags. Select the Media-Tag term from the dropdown. Then enter something into the search and submit. 
 
 * No other known bugs at this time. 
+
+= 3.0.4 =
+* Bugs fixed
+Fixed hard-coded /wp-content/ path in the pugin. Thanks to justinph for to support solution http://wordpress.org/support/topic/plugin-media-tags-doesnt-work-if-you-dont-use-wp-contents
+
+Fixed conflict on the Media Library page when you attempt to Attach a media item to a page. There is some ugly JavaScript used by WordPress which was picking up one of the Media-tags radio buttons. Added some code to hide the Media-Tags elements. And posted a trac ticket. Thanks to jc364 for bringing this to my attention and providing the needed details. http://wordpress.org/support/topic/plugin-media-tags-not-able-to-attach-media-to-page
+
+Fixed an issue with some legacy code which prevented assigning or creating tags of pure numbers. Thanks to Tom who posted that via my blog.
+http://www.codehooligans.com/projects/wordpress/media-tags/#comment-81887
+
+Fixed a compatibility issue with the newly released WordPress 3.1. In the early release candidate versions of 3.1 these was some cool code changes to the way some of the page listing and bulk actions are handled. Seems between WP3.1rc2 and WP3.1rc3 these cool changes were purposely blocked. I had not noticed this until recently. This issue effected access to the Media-tags bulk action via the dropdown on the Media Library page. 
+
+Added a new section to the Settings panel. This new section allow you to completely change the labels used by Media-tags. Thanks to Laetitia Debruyne for writing and asking for some method to convert these to her language, French. This is not so much a translation thing it i18n. But with many plugins they register post types or taxonomies and the user has not ability to change these. Well, for Media-Tags now you do. 
+ 
+Many users have been requesting a way to display or filter all untagged media. This is coming in the next release. This release is mostly bug fixes. 
+
+= 3.0.3 =
+* More bugs fixed. 
+
 
 = 3.0.2 =
 2010-12-07
