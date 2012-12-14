@@ -12,6 +12,8 @@ function mediatags_admin_init()
 	if ( version_compare( $wp_version, '3.5', '<' ) ) {
 		add_filter( 'attachment_fields_to_edit', 		'mediatags_show_fields_to_edit', 11, 2 );
 		add_filter( 'attachment_fields_to_save', 		'meditags_process_attachment_fields_to_save', 11, 2 );
+	} else {
+		add_filter( 'attachment_fields_to_edit', 		'mediatags_show_fields_to_edit_35', 11, 2 );		
 	}
 	add_action( 'delete_attachment', 				'mediatags_delete_attachment_proc' );
 
@@ -24,9 +26,11 @@ function mediatags_admin_init()
 	add_action( 'wp_ajax_get_mediatags_ajax', 		'mediatags_get_mediatags_ajax' );
 	
 	// These hook into the Media Upload popup tabs
-	add_filter( 'media_upload_tabs', 				'mediatag_upload_tab' );
-	add_action( 'media_upload_mediatags', 			'media_upload_mediatags' );
-
+	if ( version_compare( $wp_version, '3.5', '<' ) ) {
+		add_filter( 'media_upload_tabs', 				'mediatag_upload_tab' );
+		add_action( 'media_upload_mediatags', 			'media_upload_mediatags' );
+	}
+	
 	// Handle Export/Import interaction
 	add_action('export_wp', 						'mediatags_wp_export_metadata');
 	add_action('import_post_meta', 					'mediatags_wp_import_metadata', 10, 3);
@@ -495,6 +499,29 @@ function mediatags_show_fields_to_edit($form_fields, $post)
 				$post_media_tags_fields "
 		);
 	}
+	return $form_fields;
+}
+
+function mediatags_show_fields_to_edit_35($form_fields, $post) 
+{		
+	if (!is_object(get_post($post->ID))) return '';
+	
+	$master_media_tag_fields = "";
+	
+	$post_media_tags = mediatags_get_post_mediatags($post->ID);
+	if ((!$post_media_tags) || (empty($post_media_tags))) return '';
+	
+	$post_media_tags_str='';
+	foreach($post_media_tags as $slug => $term) {
+		if (strlen($post_media_tags_str)) $post_media_tags_str .= ", ";
+		$post_media_tags_str .= $term->name;
+	}
+	
+	$form_fields['media-meta'] = array(
+   		'label' => __('Media-Tags:', MEDIA_TAGS_I18N_DOMAIN),
+		'input' => 'html',
+		'html' => $post_media_tags_str
+	);
 	return $form_fields;
 }
 

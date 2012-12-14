@@ -54,6 +54,14 @@ The FAQ section has been written as a Help section within the plugin's settings 
 
 == Changelog == 
 
+= 3.1.1 = 
+2012-12-14
+* Bug fixes for WordPress 3.5 Media popup screen. Removed Media-Tags logic. Will add in filtering once new code is converted to new media system. 
+
+= 3.1 = 
+2012-12-14
+* Bug fixes for WordPress 3.5 Bulk Media-Tags management screen
+
 = 3.0.5 =
 2011-08-03
 * Bug fixes. All bug fixes were received via posts from the wordpress.org forums by alx359. Thanks to alx359 for all the details provided including plugin filename and line numbers. 
