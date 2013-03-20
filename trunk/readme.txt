@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
 Requires at least: 3.4.1
 Tested up to: 3.5
-Stable tag: 3.1
+Stable tag: 3.1.2
 
 == Description ==
 
