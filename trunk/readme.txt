@@ -54,6 +54,11 @@ The FAQ section has been written as a Help section within the plugin's settings 
 
 == Changelog == 
 
+= 3.1.2 = 
+2013-03-20
+* Bug fix for sanitizing Media-Tags slug. 
+http://wordpress.org/support/topic/media-tags-slug-sanitizing-not-working-on-special-characters
+
 = 3.1.1 = 
 2012-12-14
 * Bug fixes for WordPress 3.5 Media popup screen. Removed Media-Tags logic. Will add in filtering once new code is converted to new media system. 

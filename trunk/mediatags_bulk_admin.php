@@ -38,7 +38,8 @@ function media_tags_bulk_action_callback() {
 		{
 			foreach($tags_tmp_array as $idx => $tag_val)
 			{
-				$tag_slug = sanitize_title_with_dashes($tag_val);
+				//$tag_slug = sanitize_title_with_dashes($tag_val);
+				$tag_slug = sanitize_title($tag_val);
 
 				if ( ! ($id = term_exists( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
 				{

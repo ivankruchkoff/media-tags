@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 3.1.1
+Version: 3.1.2
 Author URI: http://www.codehooligans.com
 */
 
@@ -199,7 +199,8 @@ class MediaTags {
 		{
 			foreach($r['media_tags_array'] as $idx => $val)
 			{
-				$r['media_tags_array'][$idx] = sanitize_title_with_dashes($val);
+				//$r['media_tags_array'][$idx] = sanitize_title_with_dashes($val);
+				$r['media_tags_array'][$idx] = sanitize_title($val);
 			}
 		}
 
@@ -211,7 +212,8 @@ class MediaTags {
 			{
 				foreach($r['media_types_array'] as $idx => $val)
 				{
-					$r['media_types_array'][$idx] = sanitize_title_with_dashes($val);
+					//$r['media_types_array'][$idx] = sanitize_title_with_dashes($val);
+					$r['media_types_array'][$idx] = sanitize_title($val);
 				}
 			}
 		}
