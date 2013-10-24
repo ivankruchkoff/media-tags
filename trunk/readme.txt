@@ -2,9 +2,9 @@
 Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
-Requires at least: 3.4.1
-Tested up to: 3.5
-Stable tag: 3.1.2
+Requires at least: 3.5
+Tested up to: 3.6.1
+Stable tag: 3.1.2.1
 
 == Description ==
 
@@ -53,6 +53,13 @@ The FAQ section has been written as a Help section within the plugin's settings 
 3. The Media-Tags Bulk Management panel via the media popup Gallery tab (new in 3.0!)
 
 == Changelog == 
+
+= 3.1.2.1=
+2013-10-24
+* Mainly bug fixes release
+* Corrected use of deprecated use of 'get_editable_user_ids'.
+* Corrected use of PHP split() function which is deprecated in new versions of PHP. replaced with explode. 
+* Corrected issue reported effecting expanded menus and menu icons on non-Media-Tags screens
 
 = 3.1.2 = 
 2013-03-20

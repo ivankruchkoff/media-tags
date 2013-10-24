@@ -297,42 +297,25 @@ function mediatags_roles_panel()
 			//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
 
 			$mediatags_user_roles = $_REQUEST['media-tags-user-roles'];
-
-//			if ($current_user->has_cap('edit_users'))
+			//echo "mediatags_user_roles<pre>"; print_r($mediatags_user_roles); echo "</pre>";
+			
+			$users = array();
+			$users = get_users($current_user_id);
+			//echo "users<pre>"; print_r($users); echo "</pre>";
+			
+			if ($users)
 			{
-//				if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
-//				{
-					$users = array();
-
-					$user_ids = get_editable_user_ids($current_user_id);
-					if ($user_ids)
-					{
-						foreach($user_ids as $user_id)
-						{
-							$users[$user_id] = new WP_User( $user_id );
-						}
-					}				
-//				}
-//				else
-//					$users = get_users();					
-				
-				if ($users)
+				foreach($users as $user)
 				{
-					foreach($users as $user_id => $user)
+					$user_id = $user->ID;
+					foreach($mediatags_caps as $mediatags_cap => $mediatags_label)
 					{
-						if ($user)
-						{	
-							//echo "user<pre>"; print_r($user); echo "</pre>";
-							foreach($mediatags_caps as $mediatags_cap => $mediatags_label)
-							{
-								if ((isset($mediatags_user_roles[$user_id][$mediatags_cap]))
-								 && ($mediatags_user_roles[$user_id][$mediatags_cap] == "on"))
-									$user->add_cap($mediatags_cap);
-								else
-									$user->add_cap($mediatags_cap, false);
-							}								
-						}
-					}
+						if ((isset($mediatags_user_roles[$user_id][$mediatags_cap]))
+						 && ($mediatags_user_roles[$user_id][$mediatags_cap] == "on"))
+							$user->add_cap($mediatags_cap);
+						else
+							$user->add_cap($mediatags_cap, false);
+					}								
 				}
 			}
 			$update_message = _x("Media-Tags Roles have been updated.", 'update message', MEDIA_TAGS_I18N_DOMAIN);
@@ -358,24 +341,13 @@ function mediatags_roles_panel()
 				$user_roles_array[$role_label]['users'] = array();
 			}
 
-//			if ( version_compare( $wp_version, '3.0.999', '<' ) )			    
-//			{
-				$users = array();
-				$user_ids = get_editable_user_ids($current_user_id);
-				if ($user_ids)
-				{
-					foreach($user_ids as $user_id)
-					{
-						$users[$user_id] = new WP_User( $user_id );
-					}
-				}				
-//			}
-//			else
-//				$users = get_users();					
+			$users = array();
+			$users = get_users();
+			//echo "user_ids<pre>"; print_r($user_ids); echo "</pre>";
 
 			if ($users)
 			{				
-				foreach($users as $user_id => $user)
+				foreach($users as $user)
 				{
 					//echo "user<pre>"; print_r($user); echo "</pre>";
 					

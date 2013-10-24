@@ -16,7 +16,7 @@ function mediatags_admin_init()
 	add_action( 'delete_attachment', 				'mediatags_delete_attachment_proc' );
 
 	// http://wordpress.org/support/topic/plugin-media-tags-row-count-fix?replies=3
-	add_action('parent_file', 'mediatags_edit_tags_fixes');
+//	add_action('parent_file', 'mediatags_edit_tags_fixes');
 
 	// Add dropdowns above Media > Library listing
 	add_action( 'restrict_manage_posts', 			'mediatags_filter_posts' );
@@ -1071,7 +1071,7 @@ function mediatags_edit_tags_fixes($parent_file)
 
 function mediatags_metaboxes() {
 	add_meta_box('tagsdiv-' . MEDIA_TAGS_TAXONOMY, 
-		__( 'Media-Tags', MEDIA_TAGS_I18N_DOMAIN ), 'post_tags_meta_box', null, 'side', 'core', array( 'taxonomy' => MEDIA_TAGS_TAXONOMY ));
+		__( 'Media-Tags', MEDIA_TAGS_I18N_DOMAIN ), 'post_tags_meta_box', 'attachment', 'side', 'core', array( 'taxonomy' => MEDIA_TAGS_TAXONOMY ));
 }
 
 
