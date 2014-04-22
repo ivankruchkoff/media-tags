@@ -1,10 +1,13 @@
 === Media Tags ===
-Contributors: Paul Menard
+Contributors: pmenard
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
 Requires at least: 3.7
 Tested up to: 3.9
 Stable tag: 3.2
+License: GPLv2
+License URI: http://www.opensource.org/licenses/GPL-2.0
+
 
 == Description ==
 
