@@ -2,9 +2,9 @@
 Contributors: Paul Menard
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
-Requires at least: 3.5
-Tested up to: 3.6.1
-Stable tag: 3.1.2.1
+Requires at least: 3.7
+Tested up to: 3.9
+Stable tag: 3.2
 
 == Description ==
 
@@ -54,12 +54,15 @@ The FAQ section has been written as a Help section within the plugin's settings 
 
 == Changelog == 
 
-= 3.1.2.1=
-2013-10-24
-* Mainly bug fixes release
-* Corrected use of deprecated use of 'get_editable_user_ids'.
-* Corrected use of PHP split() function which is deprecated in new versions of PHP. replaced with explode. 
-* Corrected issue reported effecting expanded menus and menu icons on non-Media-Tags screens
+= 3.2 =
+* Converted older get_posts query style for media-tags shortcode to use WP_Query object. A new shortcode parameter query="wp_query" can be used to force specific shortcodes to use WP_Query. Or set define('MEDIA_TAGS_QUERY', 'wp_query') in your wp-config.php
+* Added new shortcode for multiple post_parent ID. post_parent="1,16,32" or for current post use post_parent="this" so you don't have to hard code the post->ID
+* Update to Roles Management screen to show users by Roles tab. 
+
+= 3.1.2.1 = 
+2013-09-08
+* Fixed issue with metabox for media-tags showing on all post types. Thanks @phy9pas
+
 
 = 3.1.2 = 
 2013-03-20

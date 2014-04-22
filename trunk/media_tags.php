@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 3.1.2.1
+Version: 3.2-Beta4
 Author URI: http://www.codehooligans.com
 */
 
@@ -25,6 +25,7 @@ class MediaTags {
 	var $thirdparty;
 	var $default_caps;
 	var $plugin_version;
+	var $query_object;
 	
 	function MediaTags()
 	{
@@ -34,7 +35,7 @@ class MediaTags {
 
 		$plugindir_node 						= dirname(plugin_basename(__FILE__));	
 		//$this->plugindir_url 					= get_bloginfo('wpurl') . "/wp-content/plugins/". $plugindir_node;
-		$this->plugindir_url 					= WP_CONTENT_URL . "/plugins/". $plugindir_node;
+		//$this->plugindir_url 					= WP_CONTENT_URL . "/plugins/". $plugindir_node;
 			
 		// Setup flags for third-party plugins we can integrate with
 		$this->thirdparty = new stdClass();
@@ -147,6 +148,25 @@ class MediaTags {
 	
 	function get_attachments_by_media_tags($args='')
 	{
+		if ((!isset($args['query'])) || (empty($args['query']))) {
+			if (defined('MEDIA_TAGS_QUERY')) {
+				$args['query'] = MEDIA_TAGS_QUERY;
+			} else {
+				$args['query'] = 'wp_query';
+			}
+		}
+		
+		
+		//echo "args<pre>"; print_r($args); echo "</pre>";
+		if ((strtolower($args['query']) == 'wp_query')) {
+			return $this->get_attachments_by_media_tags_query($args);
+		} else if ((strtolower($args['query']) == 'legacy')) {
+			return $this->get_attachments_by_media_tags_legacy($args);
+		}
+	}		
+	
+	function get_attachments_by_media_tags_legacy($args='') {
+
 		global $post;
 
 		$defaults = array(
@@ -257,6 +277,8 @@ class MediaTags {
 				}
 			}
 		}
+		//echo "objects_ids_array<pre>"; print_r($objects_ids_array); echo "</pre>";
+		$array_unique_ids = array();
 		
 		if (count($objects_ids_array) > 1)
 		{
@@ -276,9 +298,7 @@ class MediaTags {
 				}
 			}			
 			sort($array_unique_ids);
-		}
-		else if (count($objects_ids_array) == 1)		
-		{
+		} else if (count($objects_ids_array) == 1) {
 			foreach($objects_ids_array as $idx_ids => $object_ids_item)
 			{
 				$array_unique_ids = $object_ids_item;
@@ -366,6 +386,170 @@ class MediaTags {
 			}
 
 		}
+	}
+	
+/*
+	Testing shortcodes
+		
+	[media-tags media_tags="flowers"]
+
+	[media-tags media_tags="flowers" numberposts="2" query="wp_query"]
+
+	[media-tags media_tags="documents" media_types="pdf" numberposts="2" query="wp_query"]
+
+	[media-tags media_tags="documents" query="wp_query" media_types="zip"]
+
+
+	[media-tags media_tags="flowers" orderby="title" query="wp_query"]
+*/		
+	function get_attachments_by_media_tags_query($args='')
+	{
+		global $post;
+
+		$defaults = array(
+			'call_source' => '',
+			'return_type' 				=> '',
+			'display_item_callback' 	=> 'default_item_callback',
+			'media_tags' 				=> '', 
+			'media_types' 				=> null,
+			'numberposts' 				=> '-1',
+			'orderby' 					=> 'menu_order',			
+			'order' 					=> 'ASC',
+			'offset' 					=> '0',
+			'paged'						=>	1,
+			'post_type'					=> 'attachment',
+			'search_by' 				=> 'slug',
+			'size' 						=> 'medium',
+			'tags_compare' 				=> 'IN',
+			'nopaging'					=> false,
+			'post_status'				=> 'inherit'
+		);
+		$r = wp_parse_args( $args, $defaults );
+		
+		// IF the media_tags item is empty then we can't do anything.
+		if ((!$r['media_tags']) || (strlen($r['media_tags']) == 0))
+			return;
+		
+		// Enforce this to fix others who are trying to use thiw hook for other post types. 
+		$r['post_type'] = 'attachment';
+		
+		//echo "r<pre>"; print_r($r); echo "</pre>";
+		
+		// Future support for multiple post_parents --- Coming Soon!
+		if ((isset( $r['post_parent'] )) && (!empty( $r['post_parent'] )) ) {
+			$r['post_parent_array'] = explode(',', $r['post_parent']); 
+			if (!empty($r['post_parent_array'])) {
+				foreach($r['post_parent_array'] as $idx => $post_parent_id) {
+					if ($post_parent_id == 'this') {
+						global $post;
+						$r['post_parent_array'][$idx] = $post->ID;
+					} else {
+						$r['post_parent_array'][$idx] = intval($post_parent_id);
+					}
+				}
+			}
+		} else {
+			$r['post_parent_array'] = array();
+		}
+		//echo "post_parent_array<pre>"; print_r($r['post_parent_array']); echo "</pre>";
+
+		// Force 'OR' on compare if searching by name (not slug). This is because the name search will return multiple
+		// values per each 'media_tags' searched item.
+		if ($r['search_by'] != 'slug')
+			$r['tags_compare'] = 'OR';
+
+		// First split the comma-seperated media-tags list into an array
+		$r['media_tags_array'] = array_map('sanitize_title', explode(',', $r['media_tags'])); 
+
+		// Next split the comma-seperated media-types list into an array
+		if (!empty($r['media_types'])) {
+			$allowed_mime_types = get_allowed_mime_types();
+			$r['media_types_array'] = array_map('sanitize_title', explode(',', $r['media_types']));
+			
+			if ($r['media_types_array']) {
+				foreach($r['media_types_array'] as $idx => $extension) {
+					foreach ( $allowed_mime_types as $ext_preg => $mime_match ) {
+						$ext_preg_ext = '!^(' . $ext_preg . ')$!i';
+						if ( preg_match( $ext_preg_ext, $extension ) ) {
+							$r['media_types_array'][$idx] = $allowed_mime_types[$ext_preg];
+							break;
+						}
+					}
+				}
+			}
+		} else {
+			$r['media_types_array'] = array();
+		}
+	
+		if ($r['tags_compare'] == "OR")
+			$r['tags_compare'] = 'IN';
+	
+		//echo "r<pre>"; print_r($r); echo "</pre>";
+		
+		$media_tags_query_args = array(
+			'post_type' 		=>	$r['post_type'],
+			'post_status'		=>	$r['post_status'],
+			'orderby'			=>	$r['orderby'],
+			'order'				=>	$r['order'],
+			'offset'			=>	$r['offset'],
+			'tax_query' => array(
+				array(
+					'taxonomy' 	=> MEDIA_TAGS_TAXONOMY,
+					'field' 	=> $r['search_by'],
+					'terms' 	=> $r['media_tags_array'],
+					'operator'	=> $r['tags_compare']	
+				)
+			)
+		);
+
+		if (($r['media_types_array']) && (!empty($r['media_types_array'])))
+			$media_tags_query_args['post_mime_type'] = $r['media_types_array'];
+
+		if (empty($r['nopaging']))
+			$media_tags_query_args['posts_per_page'] = $r['numberposts'];
+
+		if (($r['post_parent_array']) && (!empty($r['post_parent_array'])))
+			$media_tags_query_args['post_parent__in'] = $r['post_parent_array'];
+
+		//echo "media_tags_query_args<pre>"; print_r($media_tags_query_args); echo "</pre>";
+		
+		$media_tags_query_args = apply_filters('mediatags_query_args', $media_tags_query_args);
+		$this->query_object = new WP_Query( $media_tags_query_args );
+		//echo "query_object<pre>"; print_r($this->query_object); echo "</pre>";
+		//die();
+
+		//if ($this->query_object->have_posts()) {
+		$media_tags_query_results = apply_filters('mediatags_query_results', $this->query_object->posts, $media_tags_query_args, $this->query_object);
+		if (($media_tags_query_results) && (is_array($media_tags_query_results)) && (!empty($media_tags_query_results))) {
+			if ($r['return_type'] === "li") {
+				$attachment_posts_list = "";
+	
+				foreach($media_tags_query_results as $attachment_idx => $attachment_post) {
+			
+					if ((strlen($r['display_item_callback'])) && (function_exists($r['display_item_callback']))) {
+						$attachment_posts_list .= call_user_func($r['display_item_callback'], $attachment_post, $r['size']);
+					}
+				}
+				return $attachment_posts_list;
+			} else if (($r['display_item_callback'] != "default_item_callback") 
+			        && (strlen($r['display_item_callback'])) 
+			        && (function_exists($r['display_item_callback']))) {
+				$attachment_posts_list = "";
+	
+				foreach($media_tags_query_results as $attachment_idx => $attachment_post) {
+			
+					if ((strlen($r['display_item_callback'])) && (function_exists($r['display_item_callback']))) {
+						$attachment_posts_list .= call_user_func($r['display_item_callback'], $attachment_post, $r['size']);
+					}
+				}
+				return $attachment_posts_list;
+			
+			} else {
+			
+				return $media_tags_query_results;
+			}
+		}
+		//}
 	}
 }
 $mediatags = new MediaTags();

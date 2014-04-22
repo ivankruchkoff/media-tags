@@ -29,7 +29,7 @@ function mediatags_wp_import_metadata($post_id='', $key='', $value='')
 	
 	if ($key == 'post_media_tags_export')
 	{
-		$mediatag_meta_items = split(",", $value);
+		$mediatag_meta_items = explode(",", $value);
 		if ($mediatag_meta_items)
 			wp_set_object_terms($post_id, $mediatag_meta_items, MEDIA_TAGS_TAXONOMY);
 	}

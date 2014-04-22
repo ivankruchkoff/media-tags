@@ -69,7 +69,7 @@ function legacy_load_master_media_tags()
 	$master_media_tags_list = get_option('media-tags');
 	if ($master_media_tags_list)
 	{
-		$master_media_tags_tmp = split(',', $master_media_tags_list);
+		$master_media_tags_tmp = explode(',', $master_media_tags_list);
 		if ($master_media_tags_tmp)
 		{
 			$master_media_tags = array();
@@ -96,7 +96,7 @@ function legacy_get_post_media_tags($post_id, $post_media_tags_list)
 {
 	$post_media_tags = array();
 
-	$post_media_tags_tmp = split(',', $post_media_tags_list);
+	$post_media_tags_tmp = explode(',', $post_media_tags_list);
 	if ($post_media_tags_tmp)
 	{
 		foreach($post_media_tags_tmp as $idx => $tag_val)

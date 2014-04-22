@@ -33,7 +33,7 @@ function media_tags_bulk_action_callback() {
 	// First process any new Tags entered via the input field...
 	if ((strlen($media_tags_input)) && ($media_tags_action == "media_tags_assign"))
 	{
-		$tags_tmp_array = split(',', $media_tags_input);
+		$tags_tmp_array = explode(',', $media_tags_input);
 		if ($tags_tmp_array)
 		{
 			foreach($tags_tmp_array as $idx => $tag_val)

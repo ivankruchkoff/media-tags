@@ -122,6 +122,32 @@ function mediatags_settings_panel()
 			update_option( 'mediatag_rss_feed', $mediatag_rss_feed );
 			$update_message = _x("Media-Tags Settings have been updated.", 'update message', MEDIA_TAGS_I18N_DOMAIN);
 		}
+
+		if (isset($_REQUEST['mediatag_use_roles']))
+		{
+			if (strtolower($_REQUEST['mediatag_use_roles']) == strtolower("yes"))
+				$mediatag_rss_feed = "yes";
+			else
+				$mediatag_rss_feed = "no";
+
+			update_option( 'mediatag_use_roles', $mediatag_rss_feed );
+			$update_message = _x("Media-Tags Settings have been updated.", 'update message', MEDIA_TAGS_I18N_DOMAIN);
+		}
+
+		if (isset($_REQUEST['mediatag_use_thirdparty']))
+		{
+			if (strtolower($_REQUEST['mediatag_use_thirdparty']) == strtolower("yes"))
+				$mediatag_rss_feed = "yes";
+			else
+				$mediatag_rss_feed = "no";
+
+			update_option( 'mediatag_use_thirdparty', $mediatag_rss_feed );
+			$update_message = _x("Media-Tags Settings have been updated.", 'update message', MEDIA_TAGS_I18N_DOMAIN);
+		}
+
+
+
+
 	}
 	$title = _x('Media-Tags Settings', 'settings panel title', MEDIA_TAGS_I18N_DOMAIN);
 	?>
@@ -207,9 +233,6 @@ function mediatags_settings_panel()
 						<?php mediatag_settings_boxfooter(false); ?>
 
 
-
-
-
 						<?php 
 							mediatag_settings_boxheader('mediatag-options-rssfeed', 
 								__('RSS Feed for Media-Tags', MEDIA_TAGS_I18N_DOMAIN));
@@ -231,6 +254,58 @@ function mediatags_settings_panel()
 						</select>
 						<label for="mediatag_rss_feed"><?php _e('Turn the Media-Tag RSS Feed option On/Off', 
 							MEDIA_TAGS_I18N_DOMAIN); ?></label>
+						<?php mediatag_settings_boxfooter(false); ?>
+
+
+
+						<?php 
+						$mediatag_use_roles = get_option('mediatag_use_roles', 'yes'); 
+						if (!$mediatag_use_roles)
+							$mediatag_use_roles = "yes";
+						?>
+						<?php mediatag_settings_boxheader('mediatag-options-use-roles', 
+							__('Enable Roles Management Menu', MEDIA_TAGS_I18N_DOMAIN)); ?>
+
+							<p><?php _e("By default Media-Tags support a Roles Management Menu where you can enable by WordPress Uer Role the different Media-Tags functions to manage, edit, delet, assign tags. However you can disalbe this menu here and use your own Role Management plugin. ", MEDIA_TAGS_I18N_DOMAIN); ?></p>
+
+							<select id="mediatag_use_roles" name="mediatag_use_roles">
+								<option selected="selected" value="yes"><?php 
+									echo _x('On', 'select option', MEDIA_TAGS_I18N_DOMAIN); ?></option>
+								<option <?php if ($mediatag_use_roles == "no"){ echo ' selected="selected" ';} ?> value="no"><?php
+									echo _x('Off', 'select option', MEDIA_TAGS_I18N_DOMAIN); ?></option>
+							</select>
+							<label for="mediatag_use_roles"><?php _e('Turn Media-Tag Roles Management Menu On/Off', 
+								MEDIA_TAGS_I18N_DOMAIN); ?></label>
+								<p><?php _e('Below are a list of the role capabilities used by Media-Tags', MEDIA_TAGS_I18N_DOMAIN); ?></p>
+								<ul>
+									<li><?php _e('<strong>mediatags_settings</strong> - Controls access to Media-Tags menu', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+									<li><?php _e('<strong>mediatags_manage_terms</strong> - Controls capability to manage Media-Tags terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+									<li><?php _e('<strong>mediatags_edit_terms</strong> - Controls capability to edit Media-Tags terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+									<li><?php _e('<strong>mediatags_delete_terms</strong> - Controls capability to delete Media-Tags terms.', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+									<li><?php _e('<strong>mediatags_assign_terms</strong> - Controls capability to assign Media-Tags terms to media items.', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+									<li><?php _e('<strong>mediatags_manage_role_cap</strong> - Controls access to Media-Tags Roles Management Menu', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								</ul>
+
+
+						<?php mediatag_settings_boxfooter(false); ?>
+
+
+						<?php
+							$mediatag_use_thirdparty = get_option('mediatag_use_thirdparty', 'yes'); 
+							if (!$mediatag_use_thirdparty)
+								$mediatag_use_thirdparty = "yes";
+						?>
+						<?php mediatag_settings_boxheader('mediatag-options-use-thirdparty', 
+							__('Enable Third Party Settings Menu', MEDIA_TAGS_I18N_DOMAIN)); ?>
+
+							<select id="mediatag_use_thirdparty" name="mediatag_use_thirdparty">
+								<option selected="selected" value="yes"><?php 
+									echo _x('On', 'select option', MEDIA_TAGS_I18N_DOMAIN); ?></option>
+								<option <?php if ($mediatag_use_thirdparty == "no"){ echo ' selected="selected" ';} ?> value="no"><?php
+									echo _x('Off', 'select option', MEDIA_TAGS_I18N_DOMAIN); ?></option>
+							</select>
+							<label for="mediatag_use_thirdparty"><?php _e('Turn Media-Tag Third Party Settings Menu On/Off', 
+								MEDIA_TAGS_I18N_DOMAIN); ?></label>
 						<?php mediatag_settings_boxfooter(false); ?>
 
 
@@ -270,7 +345,7 @@ function mediatags_settings_panel()
 			</div>
 		</div>
 		<p class="submit">
-		<input type="submit" name="Submit" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" />
+		<input type="submit" class="button-primary" name="Submit" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" />
 		</p>
 	</form>
 	</div>
@@ -290,33 +365,25 @@ function mediatags_roles_panel()
 	$current_user = new WP_User( $current_user_id );
 	
 	if ( (isset($_REQUEST['mediatags_roles_panel']))
-	  && (wp_verify_nonce($_REQUEST['mediatags_roles_panel'], 'mediatags_roles_panel')) ) 
-	{
-		if (isset($_REQUEST['media-tags-user-roles']))
-		{
+	  && (wp_verify_nonce($_REQUEST['mediatags_roles_panel'], 'mediatags_roles_panel')) ) {
+		if ((isset($_REQUEST['media-tags-user-roles'])) && (isset($_REQUEST['media-tags-user-id']))) {
 			//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
+			//die();
+			
+			$mediatags_user_id 		= $_REQUEST['media-tags-user-id'];
+			$mediatags_user_roles 	= $_REQUEST['media-tags-user-roles'];
 
-			$mediatags_user_roles = $_REQUEST['media-tags-user-roles'];
-			//echo "mediatags_user_roles<pre>"; print_r($mediatags_user_roles); echo "</pre>";
-			
-			$users = array();
-			$users = get_users($current_user_id);
-			//echo "users<pre>"; print_r($users); echo "</pre>";
-			
-			if ($users)
-			{
-				foreach($users as $user)
+			foreach($mediatags_user_id as $user_id) {
+				$user = new WP_User( $user_id );
+
+				foreach($mediatags_caps as $mediatags_cap => $mediatags_label)
 				{
-					$user_id = $user->ID;
-					foreach($mediatags_caps as $mediatags_cap => $mediatags_label)
-					{
-						if ((isset($mediatags_user_roles[$user_id][$mediatags_cap]))
-						 && ($mediatags_user_roles[$user_id][$mediatags_cap] == "on"))
-							$user->add_cap($mediatags_cap);
-						else
-							$user->add_cap($mediatags_cap, false);
-					}								
-				}
+					if ((isset($mediatags_user_roles[$user_id][$mediatags_cap]))
+					 && ($mediatags_user_roles[$user_id][$mediatags_cap] == "on"))
+						$user->add_cap($mediatags_cap);
+					else
+						$user->add_cap($mediatags_cap, false);
+				}								
 			}
 			$update_message = _x("Media-Tags Roles have been updated.", 'update message', MEDIA_TAGS_I18N_DOMAIN);
 		}
@@ -324,253 +391,245 @@ function mediatags_roles_panel()
 	$title = _x('Media-Tags Roles Management', 'settings panel title', MEDIA_TAGS_I18N_DOMAIN);
 	?>
 	<div class="wrap nosubsub">
-		<?php //screen_icon(); ?>
-		<h2><?php echo $title; ?></h2>
+		<?php screen_icon(); ?>
+		<h2><?php //echo $title; 
+		
+		$current_role_obj 	= '';
+		$current_role_slug	= '';
+
+		$roles = get_editable_roles();
+		//echo "roles<pre>"; print_r($roles); echo "</pre>";
+
+		if ( isset( $_GET['role'] )) {
+			$current_role_slug = esc_attr($_GET['role']);
+			if (!isset($roles[$current_role_slug])) {
+				$current_role_slug = '';
+			}
+		} 
+
+		$roles = get_editable_roles();
+		//echo "roles<pre>"; print_r($roles); echo "</pre>";
+		foreach($roles as $role_slug => $role) {
+			if ($current_role_slug == '') {
+				$current_role_obj 	= $role;
+				$current_role_slug 	= $role_slug;
+			}
+			$class = ( $role_slug == $current_role_slug ) ? ' nav-tab-active' : '';
+			echo '<a class="nav-tab'. $class .'" href="?page=mediatags_roles_panel&role='. $role_slug .'">'. $role['name'] .'</a>';
+		} 
+		?></h2>
 		<?php 
+		
 			if ( strlen($update_message)) { 
 				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
 			} 
-		?>		
-		<?php		
-			$roles = get_editable_roles();
-			$user_roles_array = array();
-			foreach($roles as $role_label => $role)
-			{
-				$user_roles_array[$role_label] 			= array();
-				$user_roles_array[$role_label]['name'] 	= $role['name'];
-				$user_roles_array[$role_label]['users'] = array();
-			}
+			?>		
+			<form class="mediatags-roles-form" method="post" action="?page=mediatags_roles_panel&role=<?php echo $current_role_slug; ?>">				
+				<?php wp_nonce_field('mediatags_roles_panel', 'mediatags_roles_panel'); ?>
+				<div id="poststuff" class="metabox-holder has-right-sidebar">
+					<div class="inner-sidebar">
+						<div id="side-sortables" class="meta-box-sortabless ui-sortable" style="position:relative;">
+							<?php mediatag_settings_sidebar(); ?>
 
-			$users = array();
-			$users = get_users();
-			//echo "user_ids<pre>"; print_r($user_ids); echo "</pre>";
-
-			if ($users)
-			{				
-				foreach($users as $user)
-				{
-					//echo "user<pre>"; print_r($user); echo "</pre>";
-					
-					if ( is_multisite() ) 
-					{
-						$cap_str = "wp_". $current_blog_id ."_capabilities";
-						if (isset($user->$cap_str))
-							$user_capabilities = $user->$cap_str;
-					}
-					else
-					{
-						$user_capabilities = $user->wp_capabilities;
-					}
-
-					if (isset($user_capabilities))
-					{
-						foreach($user_capabilities as $cap_idx => $cap_val)
-						{
-							if (isset($user_roles_array[$cap_idx]))
-								$user_roles_array[$cap_idx]['users'][$user->data->display_name] = $user;
-						}
-					}
-				}
-				//echo "user_roles_array<pre>"; print_r($user_roles_array); echo "</pre>";
-				
-				?>
-				<form class="mediatags-roles-form" method="get" action="#">
-					<input type="hidden" name="page" value="mediatags_roles_panel" />
-					<?php wp_nonce_field('mediatags_roles_panel', 'mediatags_roles_panel'); ?>
-					<div id="poststuff" class="metabox-holder has-right-sidebar">
-						<div class="inner-sidebar">
-							<div id="side-sortables" class="meta-box-sortabless ui-sortable" style="position:relative;">
-								<?php mediatag_settings_sidebar(); ?>
-
-								<?php mediatag_settings_boxheader('mediatag-roles-about', __('About this page', MEDIA_TAGS_I18N_DOMAIN)); ?>
-								<p><?php _e('This Settings panel allows control of which users can perform what functions regarding Media-Tags tags. These roles can also be administered via some other popular Role Management plugins.', MEDIA_TAGS_I18N_DOMAIN);?></p>
-								<?php mediatag_settings_boxfooter(true); ?>								
+							<?php mediatag_settings_boxheader('mediatag-roles-about', __('About this page', MEDIA_TAGS_I18N_DOMAIN)); ?>
+							<p><?php _e('This Settings panel allows control of which users can perform what functions regarding Media-Tags tags. These roles can also be administered via some other popular Role Management plugins.', MEDIA_TAGS_I18N_DOMAIN);?></p>
+							<?php mediatag_settings_boxfooter(true); ?>								
 
 
-								<?php mediatag_settings_boxheader('mediatag-roles-legend', __('Roles Legend', MEDIA_TAGS_I18N_DOMAIN)); ?>
-								<ul>
-									<li><strong><?php echo _x('Manage Settings', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash;	<?php echo _x("Allows the user access to the Media-Tags navigation block. <em>This option
+							<?php mediatag_settings_boxheader('mediatag-roles-legend', __('Roles Legend', MEDIA_TAGS_I18N_DOMAIN)); ?>
+							<ul>
+								<li><strong><?php echo _x('Manage Settings', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash;	<?php echo _x("Allows the user access to the Media-Tags navigation block. <em>This option
 excludes access to the Media-Tags Roles Management panel.</em>", 'role legend text for manage settings', MEDIA_TAGS_I18N_DOMAIN); ?> </li>
 
-									<li><strong><?php echo _x('Manage Role/Cap', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash; <?php echo _x("Allows the user access to the Media-Tags Roles Management panel. (this panel) <em>This option excludes access to the other Media-Tags Settings panels.</em>", 'role legend text for manage roles', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								<li><strong><?php echo _x('Manage Role/Cap', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash; <?php echo _x("Allows the user access to the Media-Tags Roles Management panel. (this panel) <em>This option excludes access to the other Media-Tags Settings panels.</em>", 'role legend text for manage roles', MEDIA_TAGS_I18N_DOMAIN); ?></li>
 
-									<li><strong><?php echo _x('Manage Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash; <?php echo _x("Allows users access to manage the 'Media-Tags' menu within the Media navigation block. <em>If this option is set you must also set either 'Edit Terms' or 'Delete Terms' roles.</em>", 'role legend text for manage terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
-									<li><strong><?php echo _x('Edit Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash; <?php echo _x("Allows the user 'Edit' ability within the Media-Tags terms management panel. <em>If you check this option you must also set the 'Manage Terms' Roles option.</em>", 'role legend text for edit terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
-									
-									<li><strong><?php echo _x('Delete Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash;	<?php echo _x("Allows the user 'Delete' ability within the Media-Tags terms management panel. <em>If you check this option you must also set the 'Manage Terms' Roles option.</em>", 'role legend text for delete terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
-									
-									<li><strong><?php echo _x('Assign Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
-									&ndash; <?php echo _x("Allows the user to assign Media-Tag terms to media items. When set the user will see the 'Media-Tags' fields added to the Media item edit form where you would also see fields for the Title and Caption.", 'role legend text for assign terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
-								</ul>
-								<?php mediatag_settings_boxfooter(true); ?>								
-							</div>
+								<li><strong><?php echo _x('Manage Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash; <?php echo _x("Allows users access to manage the 'Media-Tags' menu within the Media navigation block. <em>If this option is set you must also set either 'Edit Terms' or 'Delete Terms' roles.</em>", 'role legend text for manage terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								<li><strong><?php echo _x('Edit Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash; <?php echo _x("Allows the user 'Edit' ability within the Media-Tags terms management panel. <em>If you check this option you must also set the 'Manage Terms' Roles option.</em>", 'role legend text for edit terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								
+								<li><strong><?php echo _x('Delete Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash;	<?php echo _x("Allows the user 'Delete' ability within the Media-Tags terms management panel. <em>If you check this option you must also set the 'Manage Terms' Roles option.</em>", 'role legend text for delete terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								
+								<li><strong><?php echo _x('Assign Terms', 'role legend label', MEDIA_TAGS_I18N_DOMAIN); ?></strong>
+								&ndash; <?php echo _x("Allows the user to assign Media-Tag terms to media items. When set the user will see the 'Media-Tags' fields added to the Media item edit form where you would also see fields for the Title and Caption.", 'role legend text for assign terms', MEDIA_TAGS_I18N_DOMAIN); ?></li>
+							</ul>
+							<?php mediatag_settings_boxfooter(true); ?>								
 						</div>
+					</div>
 
-						<div class="has-sidebar sm-padded" >
-							<div id="post-body-content" class="">			
-								<div class="meta-box-sortabless">	
-							
-								<?php
-								foreach($user_roles_array as $user_role_idx => $user_role_data)
-								{
-									//echo "user_role_idx=[".$user_role_idx."]<br />";
-									$role = get_role($user_role_idx);
+					<div class="has-sidebar sm-padded" >
+						<div id="post-body-content" class="">			
+							<div class="meta-box-sortabless">	
+							<?php		
+								mediatag_settings_boxheader('mediatag-options-roles-'. $current_role_slug, 
+									__('Role', MEDIA_TAGS_I18N_DOMAIN). ': '. $roles[$current_role_slug]['name']); 
+
 									//echo "role<pre>"; print_r($role); echo "</pre>";
-									
-									mediatag_settings_boxheader('mediatag-options-roles-<?php echo $user_role_idx; ?>', 
-									__('Role', MEDIA_TAGS_I18N_DOMAIN). ': '. $user_role_data['name']); 
+								$user_args = array(
+									'blog_id' 	=> 	get_current_blog_id(),
+									'role'		=>	$current_role_slug,
+									'orderby'	=>	'nicename',
+									'order'		=>	'ASC'
+								);
+								$users = get_users($user_args);
+								if (!empty($users)) {				
+									?>
+									<div class="media-tags-role-legend"><?php _e('Indicates default role capabilities',
+									 	MEDIA_TAGS_I18N_DOMAIN); ?> &ndash; <span class="color"></span></div>
 
-									if ((isset($user_role_data['users'])) && (count($user_role_data['users'])))
-									{
-										?>
-										<div class="media-tags-role-legend"><?php _e('Indicats default role catabilities',
-										 	MEDIA_TAGS_I18N_DOMAIN); ?> &ndash; <span class="color"></span></div>
-										<table class="media-tags-role-management" width="100%" cellpadding="2" cellspacing="3">
-										<tr>
-											<th class="user-id"><?php echo _x('ID', 'user role table header', 
-												MEDIA_TAGS_I18N_DOMAIN); ?></th>
-											<th class="user"><?php echo _x('User (Email)', 'user role table header', 
-												MEDIA_TAGS_I18N_DOMAIN); ?></th>
-											<?php
-												$role_default = "";
-												if ((isset($role->capabilities[MEDIATAGS_SETTINGS_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_SETTINGS_CAP] == 1))
-												{ $role_default = "role-default"; }
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Settings', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-												
-											<?php 
-												$role_default = "";
-												if ((isset($role->capabilities[MEDIATAGS_MANAGE_ROLE_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_MANAGE_ROLE_CAP] == 1))
-												{ $role_default = "role-default"; }
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Role/Cap', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-												
-											<?php 
-												$role_default = "";
-												if ((isset($role->capabilities[MEDIATAGS_MANAGE_TERMS_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_MANAGE_TERMS_CAP] == 1))
-												{ $role_default = "role-default"; }
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Terms', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-
-											<?php
-												$role_default = ""; 
-												if ((isset($role->capabilities[MEDIATAGS_EDIT_TERMS_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_EDIT_TERMS_CAP] == 1))
-												{ $role_default = "role-default"; } 
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Edit Terms', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-
-											<?php 
-												$role_default = "";
-												if ((isset($role->capabilities[MEDIATAGS_DELETE_TERMS_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_DELETE_TERMS_CAP] == 1))
-												{ $role_default = "role-default"; } 
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Delete Terms', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-												
-											<?php 
-												$role_default = "";
-												if ((isset($role->capabilities[MEDIATAGS_ASSIGN_TERMS_CAP])) 
-												 && ($role->capabilities[MEDIATAGS_ASSIGN_TERMS_CAP] == 1))
-												{ $role_default = "role-default"; } 
-											?>
-											<th class="setting <?php echo $role_default; ?>"><?php echo _x('Assign Terms', 
-												'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
-										</tr>
+									<table class="media-tags-role-management" width="100%" cellpadding="2" cellspacing="3">
+									<tr>
+										<th class="user-id"><?php echo _x('ID', 'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+										<th class="user"><?php echo _x('User (Email)', 'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 										<?php
-										foreach($user_role_data['users'] as $role_user)
-										{
-											//echo "role_user<pre>"; print_r($role_user); echo "</pre>";
-											?><tr><?php
-											?><td><?php echo $role_user->data->ID; ?></td><?php
-											?><td><?php echo $role_user->data->display_name; ?><?php 
-												if ((strtolower($role_user->data->display_name))
-												 != (strtolower($role_user->data->user_email)))
-												{
-													echo " (". $role_user->data->user_email .")"; 	
-												} ?></td><?php
-											foreach($mediatags_caps as $media_tags_cap => $media_tags_desc)
-											{												
-												$media_tag_role = str_replace('_', '-', $media_tags_cap);
-												$field_id		= "media-tags-user-roles-". $role_user->ID ."-". $media_tag_role;
-												$field_name		= "media-tags-user-roles[". $role_user->ID ."][". $media_tags_cap."]";
-												$field_class 	= "no";
-												$field_label 	= _x("No", 'select option', MEDIA_TAGS_I18N_DOMAIN);
-												$field_checked 	= "";
-												if ((isset($role_user->allcaps[$media_tags_cap]))
-												 && ($role_user->allcaps[$media_tags_cap] == 1))
-												{
-													$field_class 	= "yes";
-													$field_label 	= _x("Yes", 'select option', MEDIA_TAGS_I18N_DOMAIN);
-													$field_checked 	= ' checked="checked" ';
+											$role_default = "";
+											if ((isset($role->capabilities[MEDIATAGS_SETTINGS_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_SETTINGS_CAP] == 1))
+											{ $role_default = "role-default"; }
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Settings', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+
+										<?php 
+											$role_default = "";
+											if ((isset($role->capabilities[MEDIATAGS_MANAGE_ROLE_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_MANAGE_ROLE_CAP] == 1))
+											{ $role_default = "role-default"; }
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Role/Cap', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+
+										<?php 
+											$role_default = "";
+											if ((isset($role->capabilities[MEDIATAGS_MANAGE_TERMS_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_MANAGE_TERMS_CAP] == 1))
+											{ $role_default = "role-default"; }
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Terms', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+
+										<?php
+											$role_default = ""; 
+											if ((isset($role->capabilities[MEDIATAGS_EDIT_TERMS_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_EDIT_TERMS_CAP] == 1))
+											{ $role_default = "role-default"; } 
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Edit Terms', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+
+										<?php 
+											$role_default = "";
+											if ((isset($role->capabilities[MEDIATAGS_DELETE_TERMS_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_DELETE_TERMS_CAP] == 1))
+											{ $role_default = "role-default"; } 
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Delete Terms', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+
+										<?php 
+											$role_default = "";
+											if ((isset($role->capabilities[MEDIATAGS_ASSIGN_TERMS_CAP])) 
+											 && ($role->capabilities[MEDIATAGS_ASSIGN_TERMS_CAP] == 1))
+											{ $role_default = "role-default"; } 
+										?>
+										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Assign Terms', 
+											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
+									</tr>
+									<?php
+										$row_class = '';
+										foreach($users as $user_id => $user) {
+											if ( is_multisite() ) {
+												$cap_str = "wp_". $current_blog_id ."_capabilities";
+												if (isset($user->$cap_str))
+													$user_capabilities = $user->$cap_str;
+											} else {
+												$user_capabilities = $user->wp_capabilities;
+											}
+
+											if (isset($user_capabilities)) {
+												foreach($user_capabilities as $cap_idx => $cap_val) {
+													if (isset($user_roles_array[$cap_idx]))
+														$user_roles_array[$cap_idx]['users'][$user->data->display_name] = $user;
 												}
-												?><td class="<?php echo $field_class; ?>"><?php
+											}
+											$row_class = ('alternate' == $row_class) ? '' : 'alternate';
+											
+											?>
+											<tr class="<?php echo $row_class; ?>">
+												<td><?php echo $user->ID; ?><input type="hidden" name="media-tags-user-id[]" value="<?php echo $user->ID; ?>" /></td>
+												<td><?php 
+													echo $user->display_name; 
+													if ((strtolower($user->display_name))
+											 			!= (strtolower($user->user_email))) {
+															echo " (". $user->user_email .")"; 	
+													} 
+												?></td>
+												<?php
+												//echo "mediatags_caps<pre>"; print_r($mediatags_caps); echo "</pre>";
+												foreach($mediatags_caps as $media_tags_cap => $media_tags_desc)
+												{												
+													$media_tag_role = str_replace('_', '-', $media_tags_cap);
+													$field_id		= "media-tags-user-roles-". $user->ID ."-". $media_tag_role;
+													$field_name		= "media-tags-user-roles[". $user->ID ."][". $media_tags_cap."]";
+													$field_class 	= "no";
+													$field_label 	= _x("No", 'select option', MEDIA_TAGS_I18N_DOMAIN);
+													$field_checked 	= "";
+													if ((isset($user->allcaps[$media_tags_cap]))
+											 			&& ($user->allcaps[$media_tags_cap] == 1))
+													{
+														$field_class 	= "yes";
+														$field_label 	= _x("Yes", 'select option', MEDIA_TAGS_I18N_DOMAIN);
+														$field_checked 	= ' checked="checked" ';
+													}
+													?><td class="<?php echo $field_class; ?>"><?php
 													//echo "current_user_id=[". $current_user_id ."] ID=[".$role_user->data->ID."]<br />";
 													//echo "media_tags_cap=[".$media_tags_cap."]<br />";
-													if ($role_user->data->ID == $current_user_id)
+													if ($user->ID == $current_user_id)
 													{
 														if (($media_tags_cap != MEDIATAGS_SETTINGS_CAP)
-													  	 && ($media_tags_cap != MEDIATAGS_MANAGE_ROLE_CAP) )
-														{
+												  	 		&& ($media_tags_cap != MEDIATAGS_MANAGE_ROLE_CAP) ) {
 															?><input type="checkbox" 
 																id="<?php echo $field_id; ?>" 
 																name="<?php echo $field_name; ?>" 
 																<?php echo $field_checked; ?> /><?php															
-														}
-														else
-														{
+														} else {
 															?><input type="hidden" value="on"
 																id="<?php echo $field_id; ?>" 
 																name="<?php echo $field_name; ?>"  /><?php															
 														}
-													}
-													else
-													{
+													} else {
 														?><input type="checkbox" 
 															id="<?php echo $field_id; ?>" 
 															name="<?php echo $field_name; ?>" 
 															<?php echo $field_checked; ?> /><?php
-													} ?><label for="<?php echo $field_id; ?>"><?php 
-														echo $field_label; ?></label></td><?php											
-											}
-											?></tr><?php
+													} 
+													?><label for="<?php echo $field_id; ?>"><?php 
+													echo $field_label; ?></label></td><?php											
+												}
+											?>
+											</tr>
+											<?php
 										}
-										?></table><?php
-									}
-									else
-									{
+									} else {
 										?><p><?php _e('No users at this level.', MEDIA_TAGS_I18N_DOMAIN); ?></p><?php				
-									}									
+									}
+									?></table><?php
 									mediatag_settings_boxfooter(false);
-								}
-								?>
-								</div>
+							?>
 							</div>
 						</div>
 					</div>
-					<p class="submit">
-						<input type="submit" name="Submit" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" />
-					</p>			
-				</form>
-				<?php
-			}
-			else
-			{
-				?><p><?php _e('No users at this level.', MEDIA_TAGS_I18N_DOMAIN); ?></p><?php				
-			}
+				</div>
+				<?php if ($users) { ?>
+				<p class="submit">
+					<input type="submit" name="Submit" class="button-primary" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" />
+				</p>
+				<?php } ?>
+			</form>
+			<?php
 	?></div><?php
 }
 
@@ -653,7 +712,7 @@ function mediatags_thirdparty_panel()
 				</div>
 			</div>
 			<?php if (is_plugin_active('google-sitemap-generator/sitemap.php')) { ?>
-				<p class="submit"><input type="submit" name="Submit" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" /></p>
+				<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php _e('Update Options', MEDIA_TAGS_I18N_DOMAIN ) ?>" /></p>
 			<?php } ?>
 		</form>
 	</div>
@@ -796,6 +855,8 @@ function mediatags_help_panel()
 								<li><strong>size</strong>: <?php _e("Default is 'medium'. Related to the output callback function ad displaying of images in WordPress. As you may know WordPress supports 4 images sizes for your needs thumbnail, medium, large and full.</li>
 								<li><strong>before_list</strong>: Default is '&lt;ul&gt;. You can override this default and use an ordered list or an unordered list with a specific class or id attribute. You can include a h2 header for the title before the list. </li>
 								<li><strong>after_list</strong>: Default is '&lt;/ul&gt;. Obviously this closing element must match the opening element of the 'before_list' parameter.", MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								<li><strong>post_parent</strong>: <?php _e("Default is ''. When using the shortcode you can restrict the output to be media-tag items from one or more post_parent ID. Use a comma to user more and one post_parent. Requires 3.6 or higher.", MEDIA_TAGS_I18N_DOMAIN); ?></li>
+								<li><strong>query</strong>: <?php _e("Default is 'wp_query' (new in Media-Tags 3.2). The old query code has been rewritten to use the modern WP_Query system. You can still use the old lagacy engine by using 'legacy'.", MEDIA_TAGS_I18N_DOMAIN); ?></li>
 						</ul>
 
 						<?php mediatag_settings_boxfooter(false); ?>

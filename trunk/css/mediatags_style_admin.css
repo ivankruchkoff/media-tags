@@ -238,7 +238,7 @@ table.media-tags-role-management td label {
 	margin-left: 25px;
 }
 .meta-box-sortabless .media-tags-settings-postbox li {
-	font-size: 11px;
+	font-size: 100%;
 }
 
 #mediatag-about ul {
@@ -252,7 +252,7 @@ table.media-tags-role-management td label {
 select#mediatag_rss_feed,
 select#mediatag_admin_bulk_library,
 select#mediatag_admin_bulk_inline {
-	width: 50px;
+	width: 60px;
 }
 
 .media-tags-settings-postbox ul,
