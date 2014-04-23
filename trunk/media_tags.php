@@ -4,7 +4,7 @@ Plugin Name: Media Tags
 Plugin URI: http://www.codehooligans.com/projects/wordpress/media-tags/
 Description: Provides ability to tag media/attachments via Media Management screens
 Author: Paul Menard
-Version: 3.2
+Version: 3.2.0.1
 Author URI: http://www.codehooligans.com
 */
 
@@ -148,14 +148,26 @@ class MediaTags {
 	
 	function get_attachments_by_media_tags($args='')
 	{
-		if ((!isset($args['query'])) || (empty($args['query']))) {
-			if (defined('MEDIA_TAGS_QUERY')) {
-				$args['query'] = MEDIA_TAGS_QUERY;
-			} else {
-				$args['query'] = 'wp_query';
-			}
-		}
-		
+		$defaults = array(
+			'call_source' => '',
+			'return_type' 				=> '',
+			'display_item_callback' 	=> 'default_item_callback',
+			'media_tags' 				=> '', 
+			'media_types' 				=> null,
+			'numberposts' 				=> '-1',
+			'orderby' 					=> 'menu_order',			
+			'order' 					=> 'ASC',
+			'offset' 					=> '0',
+			'paged'						=>	1,
+			'post_type'					=> 'attachment',
+			'search_by' 				=> 'slug',
+			'size' 						=> 'medium',
+			'tags_compare' 				=> 'IN',
+			'nopaging'					=> false,
+			'post_status'				=> 'inherit',
+			'query'						=> defined('MEDIA_TAGS_QUERY') ? MEDIA_TAGS_QUERY : 'wp_query'
+		);
+		$args = wp_parse_args( $args, $defaults );
 		
 		//echo "args<pre>"; print_r($args); echo "</pre>";
 		if ((strtolower($args['query']) == 'wp_query')) {
@@ -165,10 +177,11 @@ class MediaTags {
 		}
 	}		
 	
-	function get_attachments_by_media_tags_legacy($args='') {
+	function get_attachments_by_media_tags_legacy($r='') {
 
 		global $post;
 
+/*
 		$defaults = array(
 			'call_source' => '',
 			'display_item_callback' => 'default_item_callback',
@@ -186,7 +199,7 @@ class MediaTags {
 			'nopaging'	=> ''
 		);
 		$r = wp_parse_args( $args, $defaults );
-		
+*/		
 		if ((!$r['media_tags']) || (strlen($r['media_tags']) == 0))
 			return;
 		
@@ -402,10 +415,10 @@ class MediaTags {
 
 	[media-tags media_tags="flowers" orderby="title" query="wp_query"]
 */		
-	function get_attachments_by_media_tags_query($args='')
+	function get_attachments_by_media_tags_query($r='')
 	{
 		global $post;
-
+/*
 		$defaults = array(
 			'call_source' => '',
 			'return_type' 				=> '',
@@ -425,7 +438,7 @@ class MediaTags {
 			'post_status'				=> 'inherit'
 		);
 		$r = wp_parse_args( $args, $defaults );
-		
+*/		
 		// IF the media_tags item is empty then we can't do anything.
 		if ((!$r['media_tags']) || (strlen($r['media_tags']) == 0))
 			return;

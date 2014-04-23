@@ -4,7 +4,7 @@ Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
 Requires at least: 3.7
 Tested up to: 3.9
-Stable tag: 3.2
+Stable tag: 3.2.0.1
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0
 
@@ -57,7 +57,12 @@ The FAQ section has been written as a Help section within the plugin's settings 
 
 == Changelog == 
 
+= 3.2.0.1 =
+2014-04-23
+* Corrected issue where calls to get_attachments_by_media_tags() function where properly processing.
+
 = 3.2 =
+2014-04-21
 * Converted older get_posts query style for media-tags shortcode to use WP_Query object. A new shortcode parameter query="wp_query" can be used to force specific shortcodes to use WP_Query. Or set define('MEDIA_TAGS_QUERY', 'wp_query') in your wp-config.php
 * Added new shortcode for multiple post_parent ID. post_parent="1,16,32" or for current post use post_parent="this" so you don't have to hard code the post->ID
 * Update to Roles Management screen to show users by Roles tab. 
