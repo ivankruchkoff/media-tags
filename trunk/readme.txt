@@ -2,9 +2,9 @@
 Contributors: pmenard
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
-Requires at least: 3.7
-Tested up to: 3.9
-Stable tag: 3.2.0.1
+Requires at least: 3.9
+Tested up to: 4.2
+Stable tag: 3.2.0.2
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0
 
@@ -56,6 +56,11 @@ The FAQ section has been written as a Help section within the plugin's settings 
 3. The Media-Tags Bulk Management panel via the media popup Gallery tab (new in 3.0!)
 
 == Changelog == 
+
+= 3.2.0.2 =
+2014-03-25
+* Updates minimum WP requirements, Test up to, etc.
+* Added Serbian translation files. Thanks to Borisa Djuraskovic from http://www.webhostinghub.com
 
 = 3.2.0.1 =
 2014-04-23
