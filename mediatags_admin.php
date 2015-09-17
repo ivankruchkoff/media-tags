@@ -362,16 +362,15 @@ function mediatags_show_library_select($term_slug='', $select_label='', $select_
 	if ($posttype_terms)
 	{
 		?>
-		<select id="<?php echo $select_key; ?>" name="<?php echo $select_key; ?>">
-			<option selected="selected" value=""><?php echo $select_default_option; ?></option><?php
+		<select id="<?php echo esc_attr( $select_key ); ?>" name="<?php echo esc_attr( $select_key ); ?>">
+			<option selected="selected" value=""><?php echo esc_attr( $select_default_option ); ?></option><?php
 			foreach($posttype_terms as $_idx => $_item)
 			{
 				$is_selected = "";
-				//if (array_search($_item->term_id, $selected_posttype_terms) !== false)
-				if ($filter_term == $_item->slug)				
+				if ($filter_term === $_item->slug)
 					$is_selected = ' selected="selected" ';
 					
-				?><option value="<?php echo $_item->slug; ?>" <?php echo $is_selected; ?>><?php echo $_item->name; ?></option><?php
+				?><option value="<?php echo esc_attr( $_item->slug ); ?>" <?php echo $is_selected; ?>><?php echo esc_attr( $_item->name ); ?></option><?php
 			}
 			?>
 		</select>
@@ -391,7 +390,7 @@ function mediatags_terms_column_row( $something, $column_name, $term_id )
 		{
 			if ($media_tag->count > 0)
 			{
-				$row_content = '<a href="'. 
+				$row_content = '<a href="'.
 					get_mediatag_admin_library_link( $term_id). '">'.  $media_tag->count. '</a>';
 			}
 			else
@@ -875,7 +874,7 @@ function mediatags_library_column_row( $column_name, $id ) {
 				if (strlen($media_tag_list_items)) $media_tag_list_items .= ", ";
 				
 				$media_tag_list_items .= '<a href="'. 
-					get_mediatag_admin_library_link( $media_attachment->term_id). '">'.  $media_attachment->name. '</a>';				
+					esc_url( get_mediatag_admin_library_link( $media_attachment->term_id) ). '">'.  esc_attr( $media_attachment->name ) . '</a>';
 			}
 			echo $media_tag_list_items;
 		}
@@ -883,15 +882,15 @@ function mediatags_library_column_row( $column_name, $id ) {
 }
 
 function get_mediatag_admin_edit_link( $mediatag_id ) {
-	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=". MEDIA_TAGS_ADMIN_MENU_KEY;
+	$base_url = get_option('siteurl')."/wp-admin/upload.php?page=" . esc_attr( MEDIA_TAGS_ADMIN_MENU_KEY );
 
 	$media_tag = &get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
 	if ( is_wp_error( $media_tag ) )
 		return $media_tag;
 
-	$edit_href = $base_url ."&action=editmediatag&amp;mediatag_ID=".$mediatag_id;
+	$edit_href = $base_url ."&action=editmediatag&amp;mediatag_ID=". esc_attr( $mediatag_id );
 
-	return $edit_href;
+	return esc_url( $edit_href );
 }
 
 function get_mediatag_admin_search_link( $mediatag_id ) {
