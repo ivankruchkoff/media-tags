@@ -216,7 +216,7 @@ function mediatags_admin_footer()
 						if ((isset($_GET['media-tags'])) && (strlen($_GET['media-tags'])))
 						{
 							?>
-					jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
+					jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo esc_attr( $_GET['media-tags'] ); ?>"/>');
 					<?php } ?>
 				});
 			</script>
