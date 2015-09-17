@@ -79,8 +79,8 @@ function list_mediatags($args = '' ) {
 	$media_tag_list_items = "";
 	foreach($media_tag_list as $media_tag_item)
 	{
-		$media_tag_list_items .= '<li><a href="'. get_mediatag_link($media_tag_item->term_id). '">'. 
-			$media_tag_item->name. '</a></li>';
+		$media_tag_list_items .= '<li><a href="'. esc_url( get_mediatag_link($media_tag_item->term_id) ). '">'.
+			esc_html( $media_tag_item->name ) . '</a></li>';
 	}
 	
 	if ($r['echo'] == 1)
@@ -135,7 +135,7 @@ function single_mediatag_title()
 
 		if (isset($mediatag_term['term_id'])) {
 			$media_tag = &get_term( $mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY );
-			echo $media_tag->name;
+			echo esc_html( $media_tag->name );
 		}
 	}	
 }

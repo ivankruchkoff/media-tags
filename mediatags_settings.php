@@ -1,14 +1,14 @@
 <?php
-function mediatag_settings_boxheader($id, $title, $right = false) 
+function mediatag_settings_boxheader($id, $title)
 {
 	?>
-	<div id="<?php echo $id; ?>" class="postbox media-tags-settings-postbox">
-		<h3 class="hndle"><span><?php echo $title ?></span></h3>
+	<div id="<?php echo esc_attr( $id ); ?>" class="postbox media-tags-settings-postbox">
+		<h3 class="hndle"><span><?php echo esc_attr( $title ); ?></span></h3>
 		<div class="inside">
 	<?php
 }
 
-function mediatag_settings_boxfooter( $right = false) {
+function mediatag_settings_boxfooter() {
 	?>
 		</div>
 	</div>
@@ -155,10 +155,10 @@ function mediatags_settings_panel()
 		<?php wp_nonce_field('mediatags_settings_panel', 'mediatags_settings_panel'); ?>
 	<div class="wrap nosubsub">
 		<?php //screen_icon(); ?>
-		<h2><?php echo $title; ?></h2>
+		<h2><?php echo esc_attr( $title ); ?></h2>
 		<?php 
 			if ( strlen($update_message)) { 
-				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
+				?><div id="message" class="updated fade"><p><?php echo esc_attr( $update_message ); ?></p></div><?php
 			} 
 		?>		
 		<div id="poststuff" class="metabox-holder has-right-sidebar">
@@ -325,20 +325,17 @@ function mediatags_settings_panel()
 							{
 								$label_display = ucwords(strtolower(str_replace('_', ' ', $label_key)));
 								?>
-								<label for="mediatag_label_<?php echo $label_key; ?>"><?php echo $label_display; ?><?php
+								<label for="mediatag_label_<?php echo esc_attr( $label_key ); ?>"><?php echo esc_attr( $label_display ); ?><?php
 									if (isset($mediatag_labels_legend[$label_key]))
-									{ echo ': '. $mediatag_labels_legend[$label_key]; }
+									{ echo ': '. esc_attr( $mediatag_labels_legend[$label_key] ); }
 								?></label><br />
-								<input id="mediatag_label_<?php echo $label_key; ?>" 
-									name="mediatag_labels[<?php echo $label_key; ?>]" value="<?php echo $label_val; ?>" /><br /><br />
+								<input id="mediatag_label_<?php echo esc_attr( $label_key ); ?>"
+									name="mediatag_labels[<?php echo esc_attr( $label_key ); ?>]" value="<?php echo esc_attr( $label_val ); ?>" /><br /><br />
 								<?php
 							}
 						?>
 						<p><?php _e('Please refer to the WordPress Codex page for <a target="_blank" href="http://codex.wordpress.org/Function_Reference/register_taxonomy">register_taxonomy</a> for full descriptions f the labels and how they are used.'); ?></p>
 						<?php mediatag_settings_boxfooter(false); ?>
-
-
-
 					</div>
 				</div>
 			</div>
@@ -388,14 +385,11 @@ function mediatags_roles_panel()
 	$title = _x('Media-Tags Roles Management', 'settings panel title', MEDIA_TAGS_I18N_DOMAIN);
 	?>
 	<div class="wrap nosubsub">
-		<?php screen_icon(); ?>
-		<h2><?php //echo $title; 
+		<h2><?php
 		
-		$current_role_obj 	= '';
 		$current_role_slug	= '';
 
 		$roles = get_editable_roles();
-		//echo "roles<pre>"; print_r($roles); echo "</pre>";
 
 		if ( isset( $_GET['role'] )) {
 			$current_role_slug = esc_attr($_GET['role']);
@@ -405,23 +399,21 @@ function mediatags_roles_panel()
 		} 
 
 		$roles = get_editable_roles();
-		//echo "roles<pre>"; print_r($roles); echo "</pre>";
 		foreach($roles as $role_slug => $role) {
 			if ($current_role_slug == '') {
-				$current_role_obj 	= $role;
 				$current_role_slug 	= $role_slug;
 			}
 			$class = ( $role_slug == $current_role_slug ) ? ' nav-tab-active' : '';
-			echo '<a class="nav-tab'. $class .'" href="?page=mediatags_roles_panel&role='. $role_slug .'">'. $role['name'] .'</a>';
+			echo '<a class="nav-tab'. $class .'" href="?page=mediatags_roles_panel&role='. esc_attr( $role_slug ) .'">'. esc_html( $role['name'] ) .'</a>';
 		} 
 		?></h2>
 		<?php 
 		
 			if ( strlen($update_message)) { 
-				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
+				?><div id="message" class="updated fade"><p><?php echo esc_html( $update_message ); ?></p></div><?php
 			} 
 			?>		
-			<form class="mediatags-roles-form" method="post" action="?page=mediatags_roles_panel&role=<?php echo $current_role_slug; ?>">				
+			<form class="mediatags-roles-form" method="post" action="?page=mediatags_roles_panel&role=<?php echo esc_attr( $current_role_slug ); ?>">
 				<?php wp_nonce_field('mediatags_roles_panel', 'mediatags_roles_panel'); ?>
 				<div id="poststuff" class="metabox-holder has-right-sidebar">
 					<div class="inner-sidebar">
@@ -464,7 +456,6 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 								mediatag_settings_boxheader('mediatag-options-roles-'. $current_role_slug, 
 									__('Role', MEDIA_TAGS_I18N_DOMAIN). ': '. $roles[$current_role_slug]['name']); 
 
-									//echo "role<pre>"; print_r($role); echo "</pre>";
 								$user_args = array(
 									'blog_id' 	=> 	get_current_blog_id(),
 									'role'		=>	$current_role_slug,
@@ -487,7 +478,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_SETTINGS_CAP] == 1))
 											{ $role_default = "role-default"; }
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Settings', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Manage Settings',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 
 										<?php 
@@ -496,7 +487,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_MANAGE_ROLE_CAP] == 1))
 											{ $role_default = "role-default"; }
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Role/Cap', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Manage Role/Cap',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 
 										<?php 
@@ -505,7 +496,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_MANAGE_TERMS_CAP] == 1))
 											{ $role_default = "role-default"; }
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Manage Terms', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Manage Terms',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 
 										<?php
@@ -514,7 +505,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_EDIT_TERMS_CAP] == 1))
 											{ $role_default = "role-default"; } 
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Edit Terms', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Edit Terms',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 
 										<?php 
@@ -523,7 +514,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_DELETE_TERMS_CAP] == 1))
 											{ $role_default = "role-default"; } 
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Delete Terms', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Delete Terms',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 
 										<?php 
@@ -532,7 +523,7 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											 && ($role->capabilities[MEDIATAGS_ASSIGN_TERMS_CAP] == 1))
 											{ $role_default = "role-default"; } 
 										?>
-										<th class="setting <?php echo $role_default; ?>"><?php echo _x('Assign Terms', 
+										<th class="setting <?php echo esc_attr( $role_default ); ?>"><?php echo _x('Assign Terms',
 											'user role table header', MEDIA_TAGS_I18N_DOMAIN); ?></th>
 									</tr>
 									<?php
@@ -558,14 +549,13 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 											<tr class="<?php echo $row_class; ?>">
 												<td><?php echo $user->ID; ?><input type="hidden" name="media-tags-user-id[]" value="<?php echo $user->ID; ?>" /></td>
 												<td><?php 
-													echo $user->display_name; 
+													echo esc_attr( $user->display_name );
 													if ((strtolower($user->display_name))
 											 			!= (strtolower($user->user_email))) {
 															echo " (". $user->user_email .")"; 	
 													} 
 												?></td>
 												<?php
-												//echo "mediatags_caps<pre>"; print_r($mediatags_caps); echo "</pre>";
 												foreach($mediatags_caps as $media_tags_cap => $media_tags_desc)
 												{												
 													$media_tag_role = str_replace('_', '-', $media_tags_cap);
@@ -581,30 +571,28 @@ excludes access to the Media-Tags Roles Management panel.</em>", 'role legend te
 														$field_label 	= _x("Yes", 'select option', MEDIA_TAGS_I18N_DOMAIN);
 														$field_checked 	= ' checked="checked" ';
 													}
-													?><td class="<?php echo $field_class; ?>"><?php
-													//echo "current_user_id=[". $current_user_id ."] ID=[".$role_user->data->ID."]<br />";
-													//echo "media_tags_cap=[".$media_tags_cap."]<br />";
+													?><td class="<?php echo esc_attr( $field_class ); ?>"><?php
 													if ($user->ID == $current_user_id)
 													{
 														if (($media_tags_cap != MEDIATAGS_SETTINGS_CAP)
 												  	 		&& ($media_tags_cap != MEDIATAGS_MANAGE_ROLE_CAP) ) {
 															?><input type="checkbox" 
-																id="<?php echo $field_id; ?>" 
-																name="<?php echo $field_name; ?>" 
-																<?php echo $field_checked; ?> /><?php															
+																id="<?php echo esc_attr( $field_id ); ?>"
+																name="<?php echo esc_attr( $field_name ); ?>"
+																<?php echo esc_html( $field_checked ); ?> /><?php
 														} else {
 															?><input type="hidden" value="on"
-																id="<?php echo $field_id; ?>" 
-																name="<?php echo $field_name; ?>"  /><?php															
+																id="<?php echo esc_attr( $field_id ); ?>"
+																name="<?php echo esc_attr( $field_name ); ?>"  /><?php
 														}
 													} else {
 														?><input type="checkbox" 
-															id="<?php echo $field_id; ?>" 
-															name="<?php echo $field_name; ?>" 
-															<?php echo $field_checked; ?> /><?php
+															id="<?php echo esc_attr( $field_id ); ?>"
+															name="<?php echo esc_attr( $field_name ); ?>"
+															<?php echo esc_html( $field_checked ); ?> /><?php
 													} 
-													?><label for="<?php echo $field_id; ?>"><?php 
-													echo $field_label; ?></label></td><?php											
+													?><label for="<?php echo esc_attr( $field_id ); ?>"><?php
+													echo esc_html( $field_label ); ?></label></td><?php
 												}
 											?>
 											</tr>
@@ -636,7 +624,6 @@ function mediatags_thirdparty_panel()
 	if ( (isset($_REQUEST['mediatags_thirdparty_panel'])) 
 	  && (wp_verify_nonce($_REQUEST['mediatags_thirdparty_panel'], 'mediatags_thirdparty_panel')) )
 	{
-		//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
 		if (isset($_REQUEST['mediatag_google_plugin']))
 		{
 			if (strtolower($_REQUEST['mediatag_google_plugin']) == strtolower("yes"))
@@ -651,13 +638,12 @@ function mediatags_thirdparty_panel()
 	$title = _x('Media-Tags Third Party Support', 'settings panel title', MEDIA_TAGS_I18N_DOMAIN);
 	?>
 	<div class="wrap nosubsub">
-		<?php //screen_icon(); ?>
-		<h2><?php echo $title; ?></h2>
+		<h2><?php echo esc_html( $title ); ?></h2>
 		<p><strong><?php _e('This admin panel provides support functions for Third-Party plugins', MEDIA_TAGS_I18N_DOMAIN); ?></strong></p>
 		
 		<?php 
 			if ( strlen($update_message)) { 
-				?><div id="message" class="updated fade"><p><?php echo $update_message; ?></p></div><?php 
+				?><div id="message" class="updated fade"><p><?php echo esc_html( $update_message ); ?></p></div><?php
 			} 
 		?>		
 		<form class="mediatags_thirdparty_panel" method="get" action="#">
@@ -721,8 +707,7 @@ function mediatags_help_panel()
 	$title = _x('Media-Tags Help/Support', 'settings panel title', MEDIA_TAGS_I18N_DOMAIN);
 	?>
 	<div class="wrap nosubsub">
-		<?php //screen_icon(); ?>
-		<h2><?php echo $title; ?></h2>
+		<h2><?php echo esc_html( $title ); ?></h2>
 		<p><strong><?php _e('This admin panel attempts to put together some of the user question submitted on how to use 
 		the Media-Tags plugin', MEDIA_TAGS_I18N_DOMAIN); ?></strong></p>
 		

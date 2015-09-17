@@ -23,8 +23,8 @@ function add_mediatags_alternate_link()
 			if ($feed_link)
 			{
 				?><link id="MediaTagsRSS" rel="alternate" type="application/rss+xml"
-					title="<?php echo $feed_title ; ?>" 
-					href="<?php echo $feed_link; ?>" />
+					title="<?php echo esc_attr( $feed_title ); ?>"
+					href="<?php echo esc_attr( $feed_link ); ?>" />
 				<?php
 			}
 		}
