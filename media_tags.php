@@ -566,3 +566,4 @@ class MediaTags {
 	}
 }
 $mediatags = new MediaTags();
+$GLOBALS[ 'mediatags' ] = $mediatags;
