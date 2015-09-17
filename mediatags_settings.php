@@ -59,7 +59,7 @@ function mediatags_setting_permalink_proc() {
 		$mediatag_base = "media-tags";
 		
 	?><input name="mediatag_base" id="mediatag_base" type="text" 
-	value="<?php echo $mediatag_base; ?>" class="regular-text code" /> 
+	value="<?php echo esc_attr( $mediatag_base ); ?>" class="regular-text code" />
 	<?php echo sprintf(__("(<i>default is '%s'</i> )<br />"), MEDIA_TAGS_URL_DEFAULT );  ?> 
 	<?php _e("<strong>Note</strong> Be careful not to use a prefix that may conflict with other WordPress standard prefixes like 'category', 'tag', a Page slug, etc.", MEDIA_TAGS_I18N_DOMAIN);
 } 
@@ -366,9 +366,7 @@ function mediatags_roles_panel()
 	if ( (isset($_REQUEST['mediatags_roles_panel']))
 	  && (wp_verify_nonce($_REQUEST['mediatags_roles_panel'], 'mediatags_roles_panel')) ) {
 		if ((isset($_REQUEST['media-tags-user-roles'])) && (isset($_REQUEST['media-tags-user-id']))) {
-			//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
-			//die();
-			
+
 			$mediatags_user_id 		= $_REQUEST['media-tags-user-id'];
 			$mediatags_user_roles 	= $_REQUEST['media-tags-user-roles'];
 

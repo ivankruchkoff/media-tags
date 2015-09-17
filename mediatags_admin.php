@@ -613,122 +613,6 @@ function meditags_process_attachment_fields_to_save($post, $attachment)
 
     return $post;
 }
-/*
-function mediatag_process_admin_forms($media_tags_action, $select_media_items, $select_media_tags, $media_tags_input='')
-{
-	// First process any new Tags entered via the input field...
-	if ((strlen($media_tags_input)) && ($media_tags_action == "assign"))
-	{
-		$tags_tmp_array = explode(',', $media_tags_input);
-		if ($tags_tmp_array)
-		{
-			foreach($tags_tmp_array as $idx => $tag_val)
-			{
-				//$tag_slug = sanitize_title_with_dashes($tag_val);
-				$tag_slug = sanitize_title($tag_val);
-
-				if ( ! ($id = term_exists( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
-				{
-					$inserted_term_id = wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
-					if (isset($inserted_term_id['term_id']))
-					{
-						$_term = get_term($inserted_term_id['term_id'], MEDIA_TAGS_TAXONOMY);
-						if ($_term)
-							$select_media_tags[] = $_term->slug;
-					}
-				}
-				else
-				{
-					$_term = get_term($id['term_id'], MEDIA_TAGS_TAXONOMY);
-					if ($_term)
-						$select_media_tags[] = $_term->slug;
-				}
-			}
-		}
-	}
-		
-	if ( (strlen($media_tags_action)) && (count($select_media_items)) && (count($select_media_tags)) )
-	{
-//		echo "media_tags_action=[".$media_tags_action."]<br />\n";
-//		echo "select_media_tags<pre>"; print_r($select_media_tags); echo "</pre>\n";
-//		echo "select_media_items<pre>"; print_r($select_media_items); echo "</pre>\n";
-		
-		$selected_media_tag_terms = array();
-		//$selected_media_tag_terms = get_terms(MEDIA_TAGS_TAXONOMY, array('include' => $select_media_tags));
-		foreach($select_media_tags as $media_tag_id)
-		{
-			echo "media_tag_id=[". $media_tag_id ."]<br />";
-			$selected_media_tag_terms[] = get_term($media_tag_id, MEDIA_TAGS_TAXONOMY);
-		}
-		echo "selected_media_tag_terms<pre>"; print_r($selected_media_tag_terms); echo "</pre>\n";
-		
-		if ($media_tags_action == "assign")
-		{
-			foreach($select_media_items as $select_media_item_id)
-			{
-				$media_tag_slugs = array();
-				
-				//echo "select_media_item_id=[". $select_media_item_id ."]<br />";
-				$media_item_terms_current = wp_get_object_terms($select_media_item_id, MEDIA_TAGS_TAXONOMY);
-				//echo "media_item_terms_current<pre>"; print_r($media_item_terms_current); echo "</pre>";
-				if (!$media_item_terms_current)
-				{
-					if ($selected_media_tag_terms)
-					{
-						foreach($selected_media_tag_terms as $selected_media_tag_term)
-							$media_tag_slugs[$selected_media_tag_term->slug] = $selected_media_tag_term->slug;
-					}
-				}
-				else
-				{
-					// Here we need to combine the media item's already defined media-tag and the new media-tags
-					//echo "media_item_terms_current<pre>"; print_r($media_item_terms_current); echo "</pre>";
-					foreach($media_item_terms_current as $idx => $current_term)
-						$media_tag_slugs[$current_term->slug] = $current_term->slug;
-
-					if ($selected_media_tag_terms)
-					{
-						echo "selected_media_tag_terms<pre>"; print_r($selected_media_tag_terms); echo "</pre>";
-						foreach($selected_media_tag_terms as $selected_media_tag_term)
-							$media_tag_slugs[$selected_media_tag_term->slug] = $selected_media_tag_term->slug;
-					}
-				}
-				if (count($media_tag_slugs))
-				{
-					// If the Media Item does not have any assigned Media-Tag we simple assign the selected Media-Tags
-					wp_set_object_terms($select_media_item_id, $media_tag_slugs, MEDIA_TAGS_TAXONOMY);								
-				}
-			}
-		}
-		else if ($media_tags_action == "remove")
-		{
-			foreach($select_media_items as $select_media_item_id)
-			{
-				$media_tag_slugs = array();
-				
-				$media_item_terms_current = wp_get_object_terms($select_media_item_id, MEDIA_TAGS_TAXONOMY);
-				if ($media_item_terms_current)
-				{
-					foreach($selected_media_tag_terms as $selected_media_tag_term)
-					{
-						foreach($media_item_terms_current as $current_idx => $current_term)
-						{
-							if ($current_term->term_id == $selected_media_tag_term->term_id)
-								unset($media_item_terms_current[$current_idx]);
-						}						
-					}
-					foreach($media_item_terms_current as $current_idx => $current_term)
-						$media_tag_slugs[$current_term->slug] = $current_term->slug;
-					if (count($media_tag_slugs))
-						wp_set_object_terms($select_media_item_id, $media_tag_slugs, MEDIA_TAGS_TAXONOMY);								
-					else
-						wp_set_object_terms($select_media_item_id, $media_tag_slugs, MEDIA_TAGS_TAXONOMY);								
-				}
-			}			
-		}
-	}	
-}
-*/
 
 function mediatags_load_master()
 {
@@ -768,7 +652,7 @@ function media_upload_mediatags()
 {
 	if ( isset($_POST['send']) ) {
 		// Return it to TinyMCE
-		return media_send_to_editor($html);
+		return media_send_to_editor();
 	}
 	$errors = null;
 	return wp_iframe( 'media_upload_mediatags_form', $errors );
@@ -800,7 +684,7 @@ function media_upload_mediatags_form()
 				?>
 				<div id="mediatag-item-<?php echo esc_attr( $mediatag_item->term_id ); ?>" class="media-item">
 					<div class="filename" style="display: block; float: left; width: 70%"><?php 
-						echo $mediatag_item->name; ?></div>
+						echo esc_attr( $mediatag_item->name ); ?></div>
 						
 					<div class="mediatag-item-count" 
 						style="display: block; float: right; width: 10%; line-height:36px;overflow:hidden;padding:0 10px;">
@@ -808,7 +692,7 @@ function media_upload_mediatags_form()
 						$mediatags_library_link = MEDIA_TAGS_TAXONOMY ."=". $mediatag_item->slug;
 						$mediatag_count = ( $mediatag_item->count > 0 ) ? '<a href="'.
 							$form_action_url .'&amp;'. $mediatags_library_link .'">'. $mediatag_item->count .'</a>' : '0';
-						echo $mediatag_count;
+						echo esc_attr( $mediatag_count );
 					?>
 					</div>
 				</div>

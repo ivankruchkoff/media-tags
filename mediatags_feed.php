@@ -33,4 +33,3 @@ function add_mediatags_alternate_link()
 		}
 	}
 }
-?>

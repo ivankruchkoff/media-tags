@@ -148,11 +148,11 @@ function mediatags_bulk_admin_panel()
 					<ul class="media-tags-list"><?php
 					foreach($mediatag_terms  as $idx => $tag_item)
 					{
-						?><li><input type="checkbox" id="bulk-media-tag-<?php echo $tag_item->term_id; ?>"
-						 	class="bulk-media-tag-item" value="<?php echo $tag_item->term_id; ?>"
-							name='bulk-media-tag-<?php echo $tag_item->term_id; ?>'  />
+						?><li><input type="checkbox" id="bulk-media-tag-<?php echo esc_attr( $tag_item->term_id ); ?>"
+						 	class="bulk-media-tag-item" value="<?php echo esc_attr( $tag_item->term_id ); ?>"
+							name='bulk-media-tag-<?php echo esc_attr( $tag_item->term_id ); ?>'  />
 							<label for='bulk-media-tag-<?php 
-								echo $tag_item->term_id; ?>'><?php echo $tag_item->name; ?></label></li><?php
+								echo esc_attr( $tag_item->term_id ); ?>'><?php echo esc_attr( $tag_item->name ); ?></label></li><?php
 					}
 					?>
 					</ul>
@@ -166,4 +166,3 @@ function mediatags_bulk_admin_panel()
 	</div>
 	<?php
 }
-?>

@@ -34,4 +34,3 @@ function mediatags_wp_import_metadata($post_id='', $key='', $value='')
 			wp_set_object_terms($post_id, $mediatag_meta_items, MEDIA_TAGS_TAXONOMY);
 	}
 }
-?>
