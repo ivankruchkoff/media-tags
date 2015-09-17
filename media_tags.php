@@ -111,7 +111,7 @@ class MediaTags {
 	{
 		global $post;
 		
-		$r = wp_parse_args( $args, $defaults );
+		$r = wp_parse_args( $args );
 		if (!isset($r['post_parent']))
 		{
 			if ($post)

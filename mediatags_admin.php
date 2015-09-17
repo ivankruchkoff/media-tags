@@ -66,12 +66,6 @@ function mediatags_admin_init()
 				array('jquery', 'mediatags-bulk-common'), $mediatags->plugin_version);
 			wp_enqueue_script('mediatags', plugins_url('/js/mediatags.js', __FILE__),
 				array('jquery'), $mediatags->plugin_version);
-
-// This logic didn't make it into 3.1 final. Lost it somewhere between 3.1rc2 and rc3
-//		    if ( version_compare( $wp_version, '3.0.999', '>' ) )
-//			{
-//				add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
-//			}							
 		}
 	}
 	// Else If we are viewing the Media popup via the Post/Page editor. if enabled via the Media-Tags > Settings page.
@@ -113,18 +107,9 @@ function mediatags_admin_init()
 			array('jquery'), $mediatags->plugin_version);			
 	}
 
-//	if (mediataga_check_url('wp-admin/async-upload.php'))		
-//	{
-		//wp_enqueue_style( 'mediatags-stylesheet', plugins_url('/css/mediatags_style_admin.css', __FILE__),
-		//	false, $mediatags->plugin_version);
-		//wp_enqueue_script('mediatags', plugins_url('/js/mediatags.js', __FILE__),
-		//	array('jquery'), $mediatags->plugin_version);			
-//	}
-
 	if (function_exists('mediatags_settings_api_init'))
 		mediatags_settings_api_init();
 
-	//add_filter( 'manage_media_columns', 			'mediatags_library_column_header' );
 	add_filter( 'manage_upload_columns', 			'mediatags_library_column_header' );
 	add_filter( 'manage_edit-media-tags_columns', 	'mediatags_terms_column_header' );
 			
@@ -133,8 +118,6 @@ function mediatags_admin_init()
 
     if ( version_compare( $wp_version, '3.0.999', '>' ) )
 	{
-		//add_filter( 'bulk_actions-upload', 			'mediatags_admin_media_bulk_actions' );
-
 		add_filter( 'manage_upload_sortable_columns', 'mediatags_admin_media_sort_columns' );
 		add_filter( 'manage_edit-media-tags_sortable_columns', 'mediatags_admin_terms_sort_columns' );
 		add_filter( 'get_terms_args', 'mediatags_admin_terms_args_filter', 10, 2);
@@ -154,13 +137,6 @@ function mediataga_check_url($url='')
 
 	if ($url == substr($_REQUEST_URI[0], $url_offset, $url_len))
 			return true;
-}
-
-// New for WP 3.1 - Adds out Bulk action item to the Bulk admin dropdown
-function mediatags_admin_media_bulk_actions($actions)
-{
-	$actions[MEDIA_TAGS_TAXONOMY] = _x('Media-Tags', 'column name', MEDIA_TAGS_I18N_DOMAIN);
-	return $actions;
 }
 
 function mediatags_admin_media_sort_columns($cols)
@@ -195,40 +171,31 @@ function mediatags_admin_footer()
 	{
 		global $current_screen;			
 	}
-	//echo "current_screen<pre>"; print_r($current_screen); echo "</pre>";
 
 	if ((isset($current_screen->id)) 
 	 && (($current_screen->id == "upload") || ($current_screen->id == "media-upload")) )
 	{
 		$mediatag_admin_bulk_library = get_option('mediatag_admin_bulk_library', 'yes'); 
-		$mediatag_admin_bulk_inline = get_option('mediatag_admin_bulk_inline', 'yes'); 
-		
+		$mediatag_admin_bulk_inline = get_option('mediatag_admin_bulk_inline', 'yes');
+
 		if ($mediatag_admin_bulk_library == "yes")
-		{	
-			mediatags_bulk_admin_panel();	
+		{
+			mediatags_bulk_admin_panel();
 			?>
 			<div id="media-tags-bulk-selection-error" title="Media Tags Selection Error" style="display:none"><?php echo __('<p>You must first select which Media Items to change.</p><p>Please close this dialog window and make your selection.</p>', MEDIA_TAGS_I18N_DOMAIN); ?>
 			</div>
-			<?php
-			show_mediataga_admin_buttons_text();
-
-			// In WP 3.1 we can use a hook to add items to the bulk action dropdown. Prior to 3.1 we do this via jQuery.
-			// 2011-02-24: No this was removed in 3.1 final. Lost is between 3.1rc2 and rc3.
-//		    if ( version_compare( $wp_version, '3.0.999', '<' ) )
-			{
-				?>
-				<script type='text/javascript'>
+			<?php show_mediataga_admin_buttons_text(); ?>
+			<script type='text/javascript'>
 				jQuery(document).ready(function() {
 					jQuery('form#posts-filter select[name=action]').append('<option value="media-tags"><?php 
-						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
+						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');
 					jQuery('form#posts-filter select[name=action2]').append('<option value="media-tags"><?php 
-						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');				
-						
+						echo _x('Media-Tags', 'bulk admin label', MEDIA_TAGS_I18N_DOMAIN); ?></option>');
+
 					jQuery('select#media-tags').change(function(){
 						var media_tags_filter = jQuery(this).val();
 						if (media_tags_filter !== "")
 						{
-							//alert('media_tags_filter=['+media_tags_filter+']');
 							if (jQuery('form.search-form input#media-tags-search').length)
 							{
 								jQuery('form.search-form input#media-tags-search').val(media_tags_filter);
@@ -236,70 +203,27 @@ function mediatags_admin_footer()
 							else
 							{
 								jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="'+media_tags_filter+'"/>');
-								
+
 							}
 						}
 						else
 						{
-							jQuery('form.search-form input#media-tags-search').remove();	
+							jQuery('form.search-form input#media-tags-search').remove();
 						}
 					});
-						
+
 					<?php
 						if ((isset($_GET['media-tags'])) && (strlen($_GET['media-tags'])))
 						{
 							?>
-							jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
-							<?php
-						}
-					?>	
+					jQuery('form.search-form').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
+					<?php } ?>
 				});
-				</script>
-				<?php
-			}
-/*			else if ( version_compare( $wp_version, '3.0.999', '>' ) )
-			{
-				?>
-				<script type='text/javascript'>				
-					jQuery(document).ready(function() {
-				
-						jQuery('select#media-tags').change(function(){
-							var media_tags_filter = jQuery(this).val();
-							if (media_tags_filter !== "")
-							{
-								alert('media_tags_filter=['+media_tags_filter+']');
-								if (jQuery('form#posts-filter input#media-tags-search').length)
-								{
-									jQuery('form#posts-filter input#media-tags-search').val(media_tags_filter);
-								}
-								else
-								{
-									jQuery('form#posts-filter').append('<input type="hidden" id="media-tags-search" name="media-tags" value="'+media_tags_filter+'"/>');
-							
-								}
-							}
-							else
-							{
-								jQuery('form# input#media-tags-search').remove();	
-							}
-						});
-					
-						<?php
-							if ((isset($_REQUEST['media-tags'])) && (strlen($_REQUEST['media-tags'])))
-							{
-								?>
-								jQuery('form#posts-filter').append('<input type="hidden" id="media-tags-search" name="media-tags" value="<?php echo $_GET['media-tags']; ?>"/>');
-								<?php
-							}
-						?>	
-					});
-				</script>
-				<?php
-			}		    			
-*/			
+			</script>
+		<?php
 		}
 	}
-}	
+}
 
 function show_mediataga_admin_buttons_text()
 {
