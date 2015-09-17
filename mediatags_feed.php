@@ -10,7 +10,6 @@ function add_mediatags_alternate_link()
 		return;
 
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
-	//echo "mediatag_var<pre>"; print_r($mediatag_var); echo "</pre>";
 	if ($mediatag_var)
 	{	
 	    if ( version_compare( $wp_version, '3.0', '<' ) )

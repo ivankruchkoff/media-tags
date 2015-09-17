@@ -904,32 +904,6 @@ function media_upload_mediatags_form($errors)
 	<?php
 }
 
-function mediatags_reconcile_counts()
-{
-	// This part of the function is to reconcile the counts on the mediatag items. Seems there was
-	// an issue in a previous version where the count could be wrong. 
-	$mediatag_items = get_mediatags();		
-	echo "mediatag_items<pre>"; print_r($mediatag_items); echo "</pre>";
-	if ($mediatag_items) 
-	{	
-		foreach($mediatag_items as $mediatag_item) 
-		{
-			$media_attachments =  get_objects_in_term($mediatag_item->term_id, MEDIA_TAGS_TAXONOMY);
-			if ($media_attachments) 
-			{			
-				foreach($media_attachments as $media_idx => $media_attachment_id) 
-				{
-					if (!get_post($media_attachment_id))
-					{
-						mediatags_delete_attachment_proc($media_attachment_id);	
-					}
-				}					
-			}
-		}
-	}
-}
-
-
 /* Adds column header to the Media Library panel where we show the linked Media-Tags per row */
 function mediatags_library_column_header( $cols ) {
 	$cols[MEDIA_TAGS_TAXONOMY] = _x('Media Tags', 'column name', MEDIA_TAGS_I18N_DOMAIN);
@@ -1011,14 +985,12 @@ function get_mediatag_admin_search_link( $mediatag_id ) {
 
 function get_mediatag_admin_library_link( $mediatag_id ) {
 
-//	$base_url = get_option('siteurl')."/wp-admin/upload.php?";
 	$base_url = "upload.php?";
 
 	$media_tag = get_term( $mediatag_id, MEDIA_TAGS_TAXONOMY );
 	if ( is_wp_error( $media_tag ) )
 		return;
 		
-//	$edit_href = $base_url ."mediatag_id=".$media_tag->term_id;
 	$edit_href = $base_url . MEDIA_TAGS_TAXONOMY ."=".$media_tag->slug;
 
 	return $edit_href;
@@ -1050,7 +1022,6 @@ function mediatags_get_taxonomy_labels()
 // http://wordpress.org/support/topic/plugin-media-tags-row-count-fix?replies=3
 function mediatags_edit_tags_fixes($parent_file)
 {
-	//echo "parent_file=[". $parent_file ."]<br />";
 	if ( 'edit.php?post_type=attachment' == $parent_file )
 	{
 		// back-reference to Media menu, to fix proper side-menu focus
@@ -1083,5 +1054,3 @@ function mediatags_metaboxes() {
 	add_meta_box('tagsdiv-' . MEDIA_TAGS_TAXONOMY, 
 		__( 'Media-Tags', MEDIA_TAGS_I18N_DOMAIN ), 'post_tags_meta_box', 'attachment', 'side', 'core', array( 'taxonomy' => MEDIA_TAGS_TAXONOMY ));
 }
-
-

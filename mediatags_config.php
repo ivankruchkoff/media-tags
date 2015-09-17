@@ -17,8 +17,6 @@ define('MEDIA_TAGS_TEMPLATE', 'mediatag.php');
 define('MEDIA_TAGS_RSS_TEMPLATE', 'mediatags_rss.php');
 
 define('MEDIA_TAGS_I18N_DOMAIN', 'media-tags');
-// Per the ThickBox website it is no longer supported. 
-//DEFINE('MEDIA_TAGS_POPUP', 'THICKBOX');
 DEFINE('MEDIA_TAGS_POPUP', 'JQUERY-UI');
 
 // Support for User Roles

@@ -8,8 +8,7 @@ function mediatags_plugin_version_check()
 	// If we don't find the setting we can assume the plugin version is either
 	//	a) Never been installed
 	//	b) An older version was installed which means we need to convert. 
-	
-	
+
 	if (!$media_tags_version)
 	{
 		// Here we need to convert the existing legacy media tags into the terms table. 
@@ -21,8 +20,6 @@ function mediatags_plugin_version_check()
 				if ( ! ($id = term_exists( $legacy_slug, MEDIA_TAGS_TAXONOMY ) ) )
 					wp_insert_term($legacy_name, MEDIA_TAGS_TAXONOMY, array('slug' => $legacy_slug));
 			}
-			//$media_tags_tmp = (array) get_terms(MEDIA_TAGS_TAXONOMY, 'hide_empty=0');
-			//echo "media_tags_tmp<pre>"; print_r($media_tags_tmp); echo "</pre>";				
 		}
 		
 		// Now we need to grab all the attachments in the system. Then for each one grab the meta info
@@ -47,11 +44,6 @@ function mediatags_plugin_version_check()
 					}
 				}
 			}				
-
-			foreach($post_attachments as $attachment)
-			{
-				$media_tags_tmp 	= (array)wp_get_object_terms($attachment->ID, MEDIA_TAGS_TAXONOMY);
-			}
 		}
 		
 		// Then insert/update the options table with the current plugin version so we don't have to check each time. 
@@ -110,5 +102,3 @@ function legacy_get_post_media_tags($post_id, $post_media_tags_list)
 	}
 	return $post_media_tags;
 }
-
-?>

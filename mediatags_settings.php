@@ -72,7 +72,6 @@ function mediatags_settings_panel()
 	  && (wp_verify_nonce($_REQUEST['mediatags_settings_panel'], 'mediatags_settings_panel')) )
 	{
 		$update_message = "";
-		//echo "_REQUEST<pre>"; print_r($_REQUEST); echo "</pre>";
 
 		if (isset($_REQUEST['mediatag_labels']))
 		{
@@ -933,4 +932,3 @@ function mediatags_help_panel()
 	</div>
 	<?php	
 }
-?>

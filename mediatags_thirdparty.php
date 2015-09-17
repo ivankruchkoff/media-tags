@@ -33,4 +33,3 @@ function mediatags_google_sitemap_pages()
 		}	
 	}
 }
-?>

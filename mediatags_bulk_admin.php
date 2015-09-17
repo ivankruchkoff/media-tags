@@ -1,7 +1,5 @@
 <?php
 function media_tags_bulk_action_callback() {
-//	echo "_REQUEST<pre>"; print_r($_REQUEST); echo "<pre>";
-//exit;	
 	if (isset($_REQUEST['media_tags_action']))
 		$media_tags_action = $_REQUEST['media_tags_action'];
 	else
@@ -22,14 +20,6 @@ function media_tags_bulk_action_callback() {
 	else
 		$select_media_items = array();
 
-
-	//echo "media_tags_action=[". $media_tags_action ."]<br />";
-	//echo "media_tags_input=[". $media_tags_input ."]<br />";
-	//echo "select_media_tags<pre>"; print_r($select_media_tags); echo "</pre>";
-	//echo "select_media_items<pre>"; print_r($select_media_items); echo "</pre>";
-	
-	//mediatag_process_admin_forms($media_tags_action, $select_media_items, $select_media_tags, $media_tags_input);
-	
 	// First process any new Tags entered via the input field...
 	if ((strlen($media_tags_input)) && ($media_tags_action == "media_tags_assign"))
 	{
@@ -43,9 +33,6 @@ function media_tags_bulk_action_callback() {
 
 				if ( ! ($id = term_exists( $tag_slug, MEDIA_TAGS_TAXONOMY ) ) )
 				{
-					//echo "id<pre>"; print_r($id); echo "</pre>";
-					//echo "tag_val=[". $tag_val."]<br />";
-					//echo "tag_slug=[". $tag_slug."]<br />";
 					$inserted_term_id = wp_insert_term($tag_val, MEDIA_TAGS_TAXONOMY, array('slug' => $tag_slug));
 					if (isset($inserted_term_id['term_id']))
 						$select_media_tags[] = $inserted_term_id['term_id'];
@@ -59,13 +46,11 @@ function media_tags_bulk_action_callback() {
 	if ( (strlen($media_tags_action)) && (count($select_media_items)) && (count($select_media_tags)) )
 	{
 		$selected_media_tag_terms = array();
-		//$selected_media_tag_terms = get_terms(MEDIA_TAGS_TAXONOMY, array('include' => $select_media_tags));
 		foreach($select_media_tags as $media_tag_id)
 		{
 			$selected_media_tag_terms[] = get_term($media_tag_id, MEDIA_TAGS_TAXONOMY);
 		}
-		//echo "selected_media_tag_terms<pre>"; print_r($selected_media_tag_terms); echo "</pre>\n";
-		
+
 		if ($media_tags_action == "media_tags_assign")
 		{
 			foreach($select_media_items as $select_media_item_id)
@@ -97,7 +82,6 @@ function media_tags_bulk_action_callback() {
 				}
 			}
 		}
-		//else if ($media_tags_action == "media_tags_assign")
 		// http://wordpress.org/support/topic/plugin-media-tags-library-bulk-delete-tags-fix?replies=2
 		else if ($media_tags_action == "media_tags_remove")
 		{
