@@ -61,6 +61,7 @@ The FAQ section has been written as a Help section within the plugin's settings 
 2015-09-17
 * Pruning of unused functions and commented out code.
 * Escaping of outputs.
+* Removed checking for versions less than 3.9 as that's our min supported version.
 * Fixed XSS holes in admin. Thanks to Ivan Kruchkoff from http://10up.com
 
 = 3.2.0.2 =

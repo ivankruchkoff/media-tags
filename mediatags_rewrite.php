@@ -11,10 +11,7 @@ function mediatags_template_redirect()
 
 	if ($mediatag_var)
 	{	
-		if ( version_compare( $wp_version, '3.0', '<' ) )
-			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
-		else
-			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		if ($mediatag_term)
 		{					
 			$mediatag_term = get_term( $mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY );
@@ -141,11 +138,7 @@ function mediatags_postsWhere($where, $query)
 	if ($mediatags_var)
 	{
 
-		// In WP 3.0 'is_term' was renamed to 'term_exists'
-	    if ( version_compare( $wp_version, '3.0', '<' ) )
-			$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-		else
-			$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
 
 		if (($media_tags_chk) && ($query->is_search))
 		{
@@ -168,11 +161,7 @@ function mediatags_postsJoin($join, $query)
 	if ($mediatags_var)
 	{
 
-		// In WP 3.0 'is_term' was renamed to 'term_exists'
-	    if ( version_compare( $wp_version, '3.0', '<' ) )
-			$media_tags_chk = is_term( $mediatags_var, MEDIA_TAGS_TAXONOMY );
-		else
-			$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
+		$media_tags_chk = term_exists( $mediatags_var, MEDIA_TAGS_TAXONOMY );
 
 		if (($media_tags_chk) && ($query->is_search))
 		{

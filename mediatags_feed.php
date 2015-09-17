@@ -12,10 +12,7 @@ function add_mediatags_alternate_link()
 	$mediatag_var = get_query_var(MEDIA_TAGS_QUERYVAR);
 	if ($mediatag_var)
 	{	
-	    if ( version_compare( $wp_version, '3.0', '<' ) )
-			$mediatag_term = is_term( $mediatag_var, MEDIA_TAGS_TAXONOMY );
-		else
-			$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
+		$mediatag_term = term_exists( $mediatag_var, MEDIA_TAGS_TAXONOMY );
 		if ($mediatag_term)
 		{
 			$mediatag_term = get_term($mediatag_term['term_id'], MEDIA_TAGS_TAXONOMY);

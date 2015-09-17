@@ -9,10 +9,6 @@ function mediatags_admin_init()
 			
 	add_action( 'wp_ajax_media_tags_bulk_action', 	'media_tags_bulk_action_callback' );
 
-	if ( version_compare( $wp_version, '3.5', '<' ) ) {
-		add_filter( 'attachment_fields_to_edit', 		'mediatags_show_fields_to_edit', 11, 2 );
-		add_filter( 'attachment_fields_to_save', 		'meditags_process_attachment_fields_to_save', 11, 2 );
-	}
 	add_action( 'delete_attachment', 				'mediatags_delete_attachment_proc' );
 
 	// http://wordpress.org/support/topic/plugin-media-tags-row-count-fix?replies=3
@@ -99,7 +95,7 @@ function mediatags_admin_init()
 				array('jquery'), $mediatags->plugin_version);			
 		}
 	}
-	else if ((mediataga_check_url('wp-admin/media.php')) || ((version_compare($wp_version, '3.4.999', '>')) && (mediataga_check_url('wp-admin/post.php'))))
+	else if ((mediataga_check_url('wp-admin/media.php')) || mediataga_check_url('wp-admin/post.php'))
 	{
 		wp_enqueue_style( 'mediatags-stylesheet', plugins_url('/css/mediatags_style_admin.css', __FILE__),
 			false, $mediatags->plugin_version);
@@ -116,12 +112,9 @@ function mediatags_admin_init()
 	add_action( 'manage_media_custom_column', 		'mediatags_library_column_row', 10, 2 );
 	add_filter( 'manage_media-tags_custom_column', 	'mediatags_terms_column_row', 10, 3 );
 
-    if ( version_compare( $wp_version, '3.0.999', '>' ) )
-	{
-		add_filter( 'manage_upload_sortable_columns', 'mediatags_admin_media_sort_columns' );
-		add_filter( 'manage_edit-media-tags_sortable_columns', 'mediatags_admin_terms_sort_columns' );
-		add_filter( 'get_terms_args', 'mediatags_admin_terms_args_filter', 10, 2);
-	}
+	add_filter( 'manage_upload_sortable_columns', 'mediatags_admin_media_sort_columns' );
+	add_filter( 'manage_edit-media-tags_sortable_columns', 'mediatags_admin_terms_sort_columns' );
+	add_filter( 'get_terms_args', 'mediatags_admin_terms_args_filter', 10, 2);
 }
 
 function mediataga_check_url($url='')
