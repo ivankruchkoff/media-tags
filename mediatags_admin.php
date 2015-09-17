@@ -774,28 +774,22 @@ function media_upload_mediatags()
 	return wp_iframe( 'media_upload_mediatags_form', $errors );
 }
 
-function media_upload_mediatags_form($errors)
+function media_upload_mediatags_form()
 {
-	global $wpdb, $wp_query, $wp_locale, $type, $tab, $post_mime_types, $ngg;
-	
+	global $type;
+
 	media_upload_header();
 
 	$post_id 	= intval($_REQUEST['post_id']);
-	$galleryID 	= 0;
-	$total 		= 1;
-	$picarray 	= false;
-	
+
 	if ((isset($_REQUEST['type'])) && (strlen($_REQUEST['type'])))
-		$type = "type=".$_REQUEST['type']."&";
-	
-		//$form_action_url = get_option('siteurl') . "/wp-admin/media-upload.php?".$type."tab=library&post_id=".$post_id;
-		//$form_action_url = "media-upload.php?".$type."tab=library&post_id=".$post_id;
-		$form_action_url = "media-upload.php?".$type."tab=library&tab=library&post_id=".$post_id;
+		$type = "type=". esc_attr( $_REQUEST['type'] )."&";
+		$form_action_url = "media-upload.php?".$type."tab=library&tab=library&post_id=". esc_attr( $post_id );
 	
 	?>
 	<div style="clear:both"></div>
-	<?php $mediatag_items = get_mediatags(); ?>	
-	
+	<?php $mediatag_items = get_mediatags(); ?>
+
 	<form action="">
 	<div id="media-items">
 	<?php
@@ -804,7 +798,7 @@ function media_upload_mediatags_form($errors)
 			foreach($mediatag_items as $mediatag_item)
 			{
 				?>
-				<div id="mediatag-item-<?php echo $mediatag_item->term_id; ?>" class="media-item">
+				<div id="mediatag-item-<?php echo esc_attr( $mediatag_item->term_id ); ?>" class="media-item">
 					<div class="filename" style="display: block; float: left; width: 70%"><?php 
 						echo $mediatag_item->name; ?></div>
 						
@@ -903,7 +897,7 @@ function get_mediatag_admin_search_link( $mediatag_id ) {
 		
 	$edit_href = $base_url ."&action=searchmediatag&amp;s=".$media_tag->slug;
 
-	return $edit_href;
+	return esc_url( $edit_href );
 }
 
 function get_mediatag_admin_library_link( $mediatag_id ) {
@@ -916,7 +910,7 @@ function get_mediatag_admin_library_link( $mediatag_id ) {
 		
 	$edit_href = $base_url . MEDIA_TAGS_TAXONOMY ."=".$media_tag->slug;
 
-	return $edit_href;
+	return esc_url( $edit_href );
 }
 
 function mediatags_get_taxonomy_labels()
