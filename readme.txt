@@ -3,7 +3,7 @@ Contributors: pmenard, ivankk
 Donate link: http://www.codehooligans.com/donations/
 Tags: media-tags, media tags, media, tags, images, attachments, documents, taxonomy, shortcode, permalinks, role management, bulk admin, gallery
 Requires at least: 3.9
-Tested up to: 4.2
+Tested up to: 4.3.1
 Stable tag: 3.2.0.3
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0

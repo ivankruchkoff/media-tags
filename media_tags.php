@@ -51,12 +51,8 @@ class MediaTags {
 		// Support for the Google Sitemap XML plugin
 		add_action("sm_buildmap", 'mediatags_google_sitemap_pages');				
 
-		// Add our sub-panel to the Media section. But only if WP 2.7 or higher!
-		// Not sure why this has to be here and not in admin_init. 
-	    if ( version_compare( $wp_version, '2.7', '>=' ) )
-		{
-			add_action('admin_menu', 'mediatags_admin_panels');
-		}
+		// Not sure why this has to be here and not in admin_init.
+		add_action('admin_menu', 'mediatags_admin_panels');
 	}
 
 	function init() {
